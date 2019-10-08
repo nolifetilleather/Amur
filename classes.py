@@ -181,5 +181,32 @@ class Location:
 
 
 class Position:
-    pass
+
+    def __init__(
+            self,
+            plc,
+            name,
+            izv_addr=None,
+            opv_addr=None,
+            tush_addr=None,
+    ):
+        self.plc = plc
+        self.name = name.replace(' ', '').replace('-', '_')
+        if not self.name[0].isalpha():
+            self.name = 'P' + self.name
+
+        self.izv_addr = izv_addr
+        self.opv_addr = opv_addr
+        self.tush_addr = tush_addr
+
+        self.name_for_comment = f"{self.name[1:-1].replace('_', '-')}"
+
+        self.signals_list = SignalsList()
+        self.locations_list = []
+        self.upg_counters = []
+        self.upg_markers = []
+        self.xsy_counters = []
+        self.counters = []
+        self.bool_counters = set()
+
 
