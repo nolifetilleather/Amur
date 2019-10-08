@@ -79,8 +79,8 @@ class SignalsList(list):
                         signal.sigtype in sigtypes_list
                         and
                         (signal.location.fire_fightings_cntrs is not None
-                        or
-                        signal.ff_out is not None)
+                         or
+                         signal.ff_out is not None)
                 ):
                     flg = True
                     break
@@ -179,10 +179,38 @@ class SignalsList(list):
         for signal in self:
             if (
                     isinstance(signal, Signal)
+                    and
+                    isinstance(signal.location, Location)
             ):
+                if (
+                        signal.location.warning_cntr
+                        and
+                        (signal.ff_out is not None
+                         or
+                         signal.location.fire_fightings_cntrs is not None)
+                ):
+                    flg = True
+                    break
+        return flg
 
     def contains_no_ff_or_ffo_signals_with_warning(self):
-        pass
+        flg = False
+        for signal in self:
+            if (
+                    isinstance(signal, Signal)
+                    and
+                    isinstance(signal.location, Location)
+            ):
+                if (
+                        signal.location.warning_cntr
+                        and
+                        (signal.ff_out is None
+                         and
+                         signal.location.fire_fightings_cntrs is None)
+                ):
+                    flg = True
+                    break
+        return flg
 
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$ ПРОВЕРКА НАЛИЧИЯ СИГНАЛОВ ДЛЯ DIAG_ST $$$$$$$$$$
