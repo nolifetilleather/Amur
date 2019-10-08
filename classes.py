@@ -29,31 +29,31 @@ class Signal:
 
 class SignalsList(list):
 
-    def has_any_signal_sigtype_in(self, sigtypes_list):
+    def has_any_signal_with_sigtype_in(self, sigtypes_list):
         flg = False
         for signal in self:
             if isinstance(signal, Signal):
                 if signal.sigtype in sigtypes_list:
                     flg = True
                     break
-            return flg
+        return flg
 
     # $$$$$$$$$$$$$$ ПРОВЕРКА НАЛИЧИЯ СИГНАЛОВ $$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$            ДЛЯ            $$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$   INPUT, OUTPUT, ALARMING $$$$$$$$$$$$$$$$$$$
 
     def contains_signals_for_input_txt(self):
-        return self.has_any_signal_sigtype_in(config.sigtypes_for_input_txt)
+        return self.has_any_signal_with_sigtype_in(config.sigtypes_for_input)
 
     def contains_signals_for_output_txt(self):
-        return self.has_any_signal_sigtype_in(config.sigtypes_for_output_txt)
+        return self.has_any_signal_with_sigtype_in(config.sigtypes_for_output)
 
     def contains_signals_for_alarming_txt(self):
         flg = False
         for signal in self:
             if isinstance(signal, Signal):
                 if (
-                        signal.sigtype in config.sigtypes_for_alarming_txt
+                        signal.sigtype in config.sigtypes_for_alarming
                         and
                         signal.ff_out is None
                 ):
@@ -66,7 +66,9 @@ class SignalsList(list):
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
     def contains_signals_for_counting_txt(self):
-        return self.has_any_signal_sigtype_in(config.sigtypes_for_counting_txt)
+        return self.has_any_signal_with_sigtype_in(
+            config.sigtypes_for_counting
+        )
 
     def contains_signals_with_ff_out_for_counting_txt(self):
         flg = False
@@ -76,7 +78,7 @@ class SignalsList(list):
                     and
                     signal.ff_out is not None
                     and
-                    signal.sigtype in config.sigtypes_for_counting_txt
+                    signal.sigtype in config.sigtypes_for_counting
             ):
                 flg = True
                 break
@@ -90,7 +92,7 @@ class SignalsList(list):
                     and
                     signal.ff_out is None
                     and
-                    signal.sigtype in config.sigtypes_for_counting_txt
+                    signal.sigtype in config.sigtypes_for_counting
             ):
                 flg = True
                 break
@@ -108,7 +110,7 @@ class SignalsList(list):
                     and
                     signal.location.fire_fightings_cntrs is not None
                     and
-                    signal.sigtype in config.sigtypes_for_counting_txt
+                    signal.sigtype in config.sigtypes_for_counting
             ):
                 flg = True
                 break
@@ -126,7 +128,7 @@ class SignalsList(list):
                     and
                     signal.location.fire_fightings_cntrs is None
                     and
-                    signal.sigtype in config.sigtypes_for_counting_txt
+                    signal.sigtype in config.sigtypes_for_counting
             ):
                 flg = True
                 break
@@ -137,7 +139,7 @@ class SignalsList(list):
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
     def contains_signals_for_diag_st_txt(self):
-        return self.has_any_signal_sigtype_in(config.sigtypes_for_diag_st_txt)
+        return self.has_any_signal_with_sigtype_in(config.sigtypes_for_diag_st)
 
 
 class Location:
@@ -297,7 +299,7 @@ class Position:
         config.sigtypes_for_input_txt.
         """
         txt.write(f'// {self.name_for_comment}\n')
-        for sigtype in config.sigtypes_for_input_txt:
+        for sigtype in config.sigtypes_for_input:
             txt.write(f'// {sigtype}\n')
             for signal in self.signals_list:
                 if signal.sigtype == 'sigtype':
@@ -315,7 +317,7 @@ class Position:
         config.sigtypes_for_output_txt.
         """
         txt.write(f'// {self.name_for_comment}\n')
-        for sigtype in config.sigtypes_for_output_txt:
+        for sigtype in config.sigtypes_for_output:
             txt.write(f'// {sigtype}\n')
             for signal in self.signals_list:
                 if signal.sigtype == 'sigtype':
@@ -334,7 +336,7 @@ class Position:
         config.sigtypes_for_alarming_txt и при этом
         их атрибут .ff_out is None.
         """
-        for sigtype in config.sigtypes_for_alarming_txt:
+        for sigtype in config.sigtypes_for_alarming:
             txt.write(f'// {sigtype}\n')
             for signal in self.signals_list:
                 if (
