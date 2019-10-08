@@ -13,7 +13,10 @@ class Signal:
             device=None,
             address=None,
     ):
-        self.name = name
+        self.name = name.replace('-', '_').replace(' ', '')
+        if not self.name[0].isalpha():
+            self.name = 'P' + self.name
+
         self.plc = plc
         self.signal_type = signal_type
         self.position = position
@@ -22,4 +25,5 @@ class Signal:
         self.device = device
         self.address = address
 
-    
+
+
