@@ -1,0 +1,5 @@
+sigtypes_for_input_txt = []
+sigtypes_for_output_txt = []
+sigtypes_for_alarming_txt = []
+sigtypes_for_counting_txt = []
+sigtypes_for_diag_st_txt = []
