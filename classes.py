@@ -29,7 +29,7 @@ class Signal:
 
 class SignalsList(list):
 
-    def any_signal_sigtype_in(self, sigtypes_list):
+    def has_any_signal_sigtype_in(self, sigtypes_list):
         flg = False
         for signal in self:
             if isinstance(signal, Signal):
@@ -43,20 +43,20 @@ class SignalsList(list):
     # $$$$$$$$$$$$$$   INPUT, OUTPUT, ALARMING $$$$$$$$$$$$$$$$$$$
 
     def contains_signals_for_input_txt(self):
-        return self.any_signal_sigtype_in(config.sigtypes_for_input_txt)
+        return self.has_any_signal_sigtype_in(config.sigtypes_for_input_txt)
 
     def contains_signals_for_output_txt(self):
-        return self.any_signal_sigtype_in(config.sigtypes_for_output_txt)
+        return self.has_any_signal_sigtype_in(config.sigtypes_for_output_txt)
 
     def contains_signals_for_alarming_txt(self):
-        return self.any_signal_sigtype_in(config.sigtypes_for_alarming_txt)
+        return self.has_any_signal_sigtype_in(config.sigtypes_for_alarming_txt)
 
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$ ПРОВЕРКА НАЛИЧИЯ СИГНАЛОВ ДЛЯ COUNTING $$$$$$$$$$
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
     def contains_signals_for_counting_txt(self):
-        return self.any_signal_sigtype_in(config.sigtypes_for_counting_txt)
+        return self.has_any_signal_sigtype_in(config.sigtypes_for_counting_txt)
 
     def contains_signals_with_ff_out_for_counting_txt(self):
         flg = False
@@ -127,7 +127,7 @@ class SignalsList(list):
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
     def contains_signals_for_diag_st_txt(self):
-        return self.any_signal_sigtype_in(config.sigtypes_for_diag_st_txt)
+        return self.has_any_signal_sigtype_in(config.sigtypes_for_diag_st_txt)
 
 
 class Location:
@@ -155,7 +155,7 @@ class Location:
     def position_check_and_set(self):
         """
         Метод проверяет, что все сигналы относящиеся
-        к "локации" принадлежат к одной позиции,
+        к локации принадлежат к одной позиции,
         бросает ошибку, если это не так.
         Устанавливает значение для атрибута position.
         """
@@ -209,4 +209,68 @@ class Position:
         self.counters = []
         self.bool_counters = set()
 
+    def contains_locations_with_warning(self):
+        """
+        Возвращет True если в списке locations_list
+        есть экземпляр Location атрибут .warning_cntr
+        которого == True.
+        Если такого экземпляра нет - возвращает False.
+        """
+        flg = False
+        for location in self.locations_list:
+            if location.warning_cntr:
+                flg = True
+                break
+        return flg
 
+    def contains_locations_with_warning_and_fire_fighting(self):
+        """
+        Возвращет True если в списке locations_list
+        есть экземпляр Location атрибут .warning_cntr
+        которого True, а атрибут .fire_fightings_cntrs
+        is not None.
+        Если такого экземпляра нет - возвращает False.
+        """
+        flg = False
+        for location in self.locations_list:
+            if (
+                    location.warning_cntr
+                    and
+                    location.fire_fightings_cntrs is not None
+            ):
+                flg = True
+                break
+        return flg
+
+    def contains_locations_with_warning_and_without_fire_fighting(self):
+        """
+        Возвращет True если в списке locations_list
+        есть экземпляр Location атрибут .warning_cntr
+        которого is True, а атрибут .fire_fightings_cntrs
+        is None.
+        Если такого экземпляра нет - возвращает False.
+        """
+        flg = False
+        for location in self.locations_list:
+            if (
+                    location.warning_cntr
+                    and
+                    location.fire_fightings_cntrs is None
+            ):
+                flg = True
+                break
+        return flg
+
+    def contains_locations_with_fire(self):
+        """
+        Возвращет True если в списке locations_list
+        есть экземпляр Location атрибут .fire_cntr
+        которого == True.
+        Если такого экземпляра нет - возвращает False.
+        """
+        flg = False
+        for location in self.locations_list:
+            if location.fire_cntr:
+                flg = True
+                break
+        return flg
