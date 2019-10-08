@@ -131,4 +131,55 @@ class SignalsList(list):
 
 
 class Location:
+
+    def __init__(
+            self,
+            name,
+            warning_cntr=None,
+            fire_cntr=None,
+            fire_fightings_cntrs=None,
+            conterminal_systems_cntrs=None,
+            voting_logic=None,
+    ):
+
+        self.signals_list = SignalsList()  # для ссылок на объекты сигналов
+        self.position = None  # см метод position_check_and_set
+
+        self.name = name
+        self.warning_cntr = warning_cntr
+        self.fire_cntr = fire_cntr
+        self.fire_fightings_cntrs = fire_fightings_cntrs
+        self.conterminal_systems_cntrs = conterminal_systems_cntrs
+        self.voting_logic = voting_logic
+
+    def position_check_and_set(self):
+        """
+        Метод проверяет, что все сигналы относящиеся
+        к "локации" принадлежат к одной позиции,
+        бросает ошибку, если это не так.
+        Устанавливает значение для атрибута position.
+        """
+        positions_set = set()
+        for signal in self.signals_list:
+            positions_set.add(signal.position)
+        if len(positions_set) != 1:
+            print(
+                f'Список позиций сигналов '
+                f'"локации" {self.name}:\n'
+            )
+            for position in positions_set:
+                print(position.name)
+            print()
+            raise ValueError(
+                f'В локации {self.name} обнаружены '
+                'сигналы с разными позициями,\n'
+                'исправьте входные данные.'
+            )
+        else:
+            self.position = list(positions_set)[0]
+            self.position.locations_list.append(self)
+
+
+class Position:
     pass
+
