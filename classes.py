@@ -49,7 +49,17 @@ class SignalsList(list):
         return self.has_any_signal_sigtype_in(config.sigtypes_for_output_txt)
 
     def contains_signals_for_alarming_txt(self):
-        return self.has_any_signal_sigtype_in(config.sigtypes_for_alarming_txt)
+        flg = False
+        for signal in self:
+            if isinstance(signal, Signal):
+                if (
+                        signal.sigtype in config.sigtypes_for_alarming_txt
+                        and
+                        signal.ff_out is None
+                ):
+                    flg = True
+                    break
+        return flg
 
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$ ПРОВЕРКА НАЛИЧИЯ СИГНАЛОВ ДЛЯ COUNTING $$$$$$$$$$
@@ -274,3 +284,67 @@ class Position:
                 flg = True
                 break
         return flg
+
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$ ЗАПИСЬ ST КОДА В ФАЙЛЫ $$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+    def input_write_to_txt(self, txt):
+        """
+        Метод записывает в txt строки кода на ST.
+        В коде участвуют все сигналы из self.signals_list
+        .sigtype которых входят в
+        config.sigtypes_for_input_txt.
+        """
+        txt.write(f'// {self.name_for_comment}\n')
+        for sigtype in config.sigtypes_for_input_txt:
+            txt.write(f'// {sigtype}\n')
+            for signal in self.signals_list:
+                if signal.sigtype == 'sigtype':
+                    txt.write(
+                        f'{signal.name}(.IVXX, .MBIN, .CAON, '
+                        '.SCMX, .STYP, SYS_LNG.XLNG, .IDVX);\n'
+                    )
+            txt.write('\n')
+
+    def output_write_to_txt(self, txt):
+        """
+        Метод записывает в txt строки кода на ST.
+        В коде участвуют все сигналы из SignalsList
+        .sigtype которых входят в
+        config.sigtypes_for_output_txt.
+        """
+        txt.write(f'// {self.name_for_comment}\n')
+        for sigtype in config.sigtypes_for_output_txt:
+            txt.write(f'// {sigtype}\n')
+            for signal in self.signals_list:
+                if signal.sigtype == 'sigtype':
+                    txt.write(
+                        f'{signal.name}(.IVXX, .MBIN, '
+                        f'{signal.plc.reset_position}CORS.XORS, '
+                        '.IDVX, SYS_LNG.XLNG);\n'
+                    )
+            txt.write('\n')
+
+    def alarming_write_to_txt(self, txt, warning_part):
+        """
+        Метод записывает в txt строки кода на ST.
+        В коде участвуют все сигналы из SignalsList
+        .sigtype которых входят в
+        config.sigtypes_for_alarming_txt и при этом
+        их атрибут .ff_out is None.
+        """
+        for sigtype in config.sigtypes_for_alarming_txt:
+            txt.write(f'// {sigtype}\n')
+            for signal in self.signals_list:
+                if (
+                        signal.sigtype == 'sigtype'
+                        and
+                        signal.ff_out is not None
+                ):
+                    txt.write(
+                        f'{signal.name}.CAON:='
+                        f'{signal.position.name}XFRX_CNT > 0'
+                        f'{warning_part};\n'
+                    )
+            txt.write('\n')
