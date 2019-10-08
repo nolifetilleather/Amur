@@ -350,3 +350,92 @@ class Position:
                         f'{warning_part};\n'
                     )
             txt.write('\n')
+
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$ COUNTING $$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+    @staticmethod
+    def counter_with_condition_write_to_txt(
+            txt,
+            location,
+            counter,
+            cntr_marker,
+    ):
+
+        # ПО ОДНОМУ СИГНАЛУ
+        if (
+                location.voting_logic is not None
+                and
+                int(location.voting_logic[0]) == 1
+        ):
+            if len(location.signals_list) < 1:
+                raise ValueError(
+                    f'В локации {location.name} обнаружен '
+                    'конфликт Voting_Logic с количеством\n'
+                    'сигналов относящихся к локации! '
+                    'Проверьте input.xlsx.'
+                )
+            else:
+                for signal in location.signals_list:
+                    txt.write(
+                        f'{counter}:='
+                        f'Count({signal.name}.{cntr_marker}, {counter});\n'
+                    )
+
+        # TWO OF ANY
+        if (
+                location.voting_logic is not None
+                and
+                int(location.voting_logic[0]) == 2
+                and
+                int(location.voting_logic[1]) > 2
+        ):
+            if len(location.signals_list) < 3:
+                raise ValueError(
+                    f'В локации {location.name} обнаружен '
+                    'конфликт Voting_Logic с количеством\n'
+                    'сигналов относящихся к локации! '
+                    'Проверьте input.xlsx.'
+                )
+            else:
+
+                n = location.voting_logic[1]
+                first_signal = location.signals_list[0].name
+                txt.write(
+                    f'{counter}:=Count(TWO_OF_{n}(\n'
+                    f'{first_signal}.{cntr_marker},\n'
+                )
+
+                for signal in location.signals_list[1:-1]:
+                    txt.write(
+                        f'{signal.name}.{cntr_marker},\n'
+                    )
+
+                last_signal = location.signals_list[-1].name
+                txt.write(
+                    f'{last_signal}.{cntr_marker}), {counter});\n'
+                )
+
+        # TWO OF TWO
+        if (
+                location.voting_logic is not None
+                and
+                int(location.voting_logic[0]) == 2
+                and
+                int(location.voting_logic[1]) == 2
+        ):
+
+            if len(location.signals_list) != 2:
+                raise ValueError(
+                    f'В локации {location.name} обнаружен '
+                    'конфликт Voting_Logic с количеством\n'
+                    'сигналов относящихся к локации! '
+                    'Проверьте input.xlsx.'
+                )
+
+            else:
+                first_signal = location.signals_list[0].name
+                second_signal = location.signals_list[-1].name
+                txt.write(
+                    f'{counter}:=Count({first_signal}.{cntr_marker} '
+                    f'AND {second_signal}.{cntr_marker}, {counter});\n'
+                )
