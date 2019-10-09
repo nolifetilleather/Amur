@@ -13,7 +13,7 @@ class Signal:
             ff_out=None,
             device=None,
             address=None,
-            styp = None,
+            styp=None,
     ):
         self.name = name.replace('-', '_').replace(' ', '')
         if not self.name[0].isalpha():
@@ -78,7 +78,7 @@ class SignalsList(list):
                 if (
                         signal.sigtype in sigtypes_list
                         and
-                        (signal.location.fire_fightings_cntrs is not None
+                        (signal.location.fire_fighting_cntrs is not None
                          or
                          signal.ff_out is not None)
                 ):
@@ -97,7 +97,7 @@ class SignalsList(list):
                 if (
                         signal.sigtype in sigtypes_list
                         and
-                        signal.location.fire_fightings_cntrs is None
+                        signal.location.fire_fighting_cntrs is None
                         and
                         signal.ff_out is None
                 ):
@@ -148,7 +148,7 @@ class SignalsList(list):
                             isinstance(signal.location, Location)
                     )
                     and
-                    signal.location.fire_fightings_cntrs is not None
+                    signal.location.fire_fighting_cntrs is not None
                     and
                     signal.sigtype in config.sigtypes_for_counting
             ):
@@ -166,7 +166,7 @@ class SignalsList(list):
                             isinstance(signal.location, Location)
                     )
                     and
-                    signal.location.fire_fightings_cntrs is None
+                    signal.location.fire_fighting_cntrs is None
                     and
                     signal.sigtype in config.sigtypes_for_counting
             ):
@@ -187,7 +187,7 @@ class SignalsList(list):
                         and
                         (signal.ff_out is not None
                          or
-                         signal.location.fire_fightings_cntrs is not None)
+                         signal.location.fire_fighting_cntrs is not None)
                 ):
                     flg = True
                     break
@@ -206,7 +206,7 @@ class SignalsList(list):
                         and
                         (signal.ff_out is None
                          and
-                         signal.location.fire_fightings_cntrs is None)
+                         signal.location.fire_fighting_cntrs is None)
                 ):
                     flg = True
                     break
@@ -227,7 +227,7 @@ class Location:
             name,
             warning_cntr=None,
             fire_cntr=None,
-            fire_fightings_cntrs=None,
+            fire_fighting_cntrs=None,
             conterminal_systems_cntrs=None,
             voting_logic=None,
     ):
@@ -238,7 +238,7 @@ class Location:
         self.name = name
         self.warning_cntr = warning_cntr
         self.fire_cntr = fire_cntr
-        self.fire_fightings_cntrs = fire_fightings_cntrs
+        self.fire_fighting_cntrs = fire_fighting_cntrs
         self.conterminal_systems_cntrs = conterminal_systems_cntrs
         self.voting_logic = voting_logic
 
@@ -406,7 +406,7 @@ class Position:
                     )
             txt.write('\n')
 
-    def alarming_write_to_txt(self, txt, warning_part):
+    def alarming_write_to_txt(self, txt):
         """
         Метод записывает в txt строки кода на ST.
         В коде участвуют все сигналы из SignalsList
@@ -414,13 +414,18 @@ class Position:
         config.sigtypes_for_alarming_txt и при этом
         их атрибут .ff_out is None.
         """
+        if self.contains_locations_with_warning():
+            warning_part = f' OR {self.name}_XWRX_CNT > 0'
+        else:
+            warning_part = ''
+
         for sigtype in config.sigtypes_for_alarming:
             txt.write(f'// {sigtype}\n')
             for signal in self.signals_list:
                 if (
                         signal.sigtype == 'sigtype'
                         and
-                        signal.ff_out is not None
+                        signal.ff_out is None
                 ):
                     txt.write(
                         f'{signal.name}.CAON:='
@@ -430,6 +435,16 @@ class Position:
             txt.write('\n')
 
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$ COUNTING $$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+    @staticmethod
+    def __counter_one_signal_actuation(
+            signal,
+            counter,
+            cntr_marker,
+    ):
+        return (
+            f'{counter}:=Count({signal.name}.{cntr_marker}, {counter});\n'
+        )
 
     @staticmethod
     def __counter_with_condition_write_to_txt(
@@ -455,11 +470,14 @@ class Position:
             else:
                 for signal in location.signals_list:
                     txt.write(
-                        f'{counter}:='
-                        f'Count({signal.name}.{cntr_marker}, {counter});\n'
+                        Position.__counter_one_signal_actuation(
+                            signal,
+                            counter,
+                            cntr_marker,
+                        )
                     )
 
-        # TWO OF ANY
+        # TWO_OF_n
         if (
                 location.voting_logic is not None
                 and
@@ -477,6 +495,7 @@ class Position:
             else:
 
                 n = location.voting_logic[1]
+
                 first_signal = location.signals_list[0].name
                 txt.write(
                     f'{counter}:=Count(TWO_OF_{n}(\n'
@@ -493,7 +512,7 @@ class Position:
                     f'{last_signal}.{cntr_marker}), {counter});\n'
                 )
 
-        # TWO OF TWO
+        # AND
         if (
                 location.voting_logic is not None
                 and
@@ -551,8 +570,8 @@ class Position:
                 self
                 .contains_locations_with_fire(),
             'Внимания':
-                self
-                .contains_locations_with_warning_without_fire_fighting()
+                self.signals_list
+                .contains_no_ff_or_ffo_signals_with_warning()
         }
 
         # счетчики инициирующих тушение сигналов
@@ -568,12 +587,12 @@ class Position:
                     config.sigtypes_for_falsities_in_counting
                 ),
             'Внимания':
-                self
-                .contains_locations_with_warning_and_fire_fighting()
+                self.signals_list
+                .contains_ff_or_ffo_signals_with_warning()
         }
 
         # ОБНУЛЕНИЕ СЧЕТЧИКОВ
-        txt.write('//Обнуление счетчиков\n')
+        txt.write('// Обнуление счетчиков\n')
 
         # без тушения
         for cntr in cntrs_without_ff:
@@ -602,47 +621,339 @@ class Position:
             txt.write(f'{counter}:=0;\n')
 
         # ИМИТАЦИИ
-        if (
-                cntrs_without_ff['Имитации']
-                or
-                cntrs_with_ff['Имитации']
-        ):
-            txt.write('\n//Имитации\n')
+        if cntrs_without_ff['Имитации']:
+
+            txt.write('\n// Имитации\n')
 
             cntr_marker = cntrs_markers['Имитации']
             counter = f'{position}_{cntr_marker}_CNT'
 
-            for sigtype in config.sigtypes_for_counting:
+            for sigtype in config.sigtypes_for_imitations_in_counting:
                 txt.write(f'// {sigtype}\n')
                 for signal in self.signals_list:
-                        if signal.sigtype == sigtype:
-                            txt.write(
-                                f'{counter}:=Count('
-                                f'{signal.name}.{cntr_marker}, {counter});\n'
+                    if signal.sigtype == sigtype:
+                        txt.write(
+                            self.__counter_one_signal_actuation(
+                                signal,
+                                counter,
+                                cntr_marker,
                             )
+                        )
+                txt.write('\n')
 
         # РЕМОНТЫ, ОТКЛЮЧЕНИЯ
+        if cntrs_without_ff['Ремонты']:
+
+            txt.write('\n// Ремонты, отключения\n')
+
+            cntr_marker = cntrs_markers['Ремонты']
+            counter = f'{position}_{cntr_marker}_CNT'
+
+            for sigtype in config.sigtypes_for_repairs_in_counting:
+                txt.write(f'// {sigtype}\n')
+                for signal in self.signals_list:
+                    if signal.sigtype == sigtype:
+                        txt.write(
+                            self.__counter_one_signal_actuation(
+                                signal,
+                                counter,
+                                cntr_marker,
+                            )
+                        )
+                txt.write('\n')
+
+        # СЧЕТЧИКИ ИП БЕЗ ТУШЕНИЯ
+        # НЕИСПРАВНОСТИ (сигналы без тушения)
+        if cntrs_without_ff['Неисправности']:
+
+            txt.write('\n// Неисправности (сигналы без тушения)\n')
+
+            cntr_marker = cntrs_markers['Неисправности']
+            counter = f'{position}_{cntr_marker}_CNT'
+
+            for sigtype in config.sigtypes_for_faults_in_counting:
+                txt.write(f'// {sigtype}\n')
+                for signal in self.signals_list:
+                    if (
+                            signal.sigtype == sigtype
+                            and
+                            signal.ff_out is None
+                            and
+                            (signal.location is None
+                             or
+                             (isinstance(signal.location, Location)
+                              and
+                              signal.location.fire_fighting_cntrs is None))
+                    ):
+                        txt.write(
+                            self.__counter_one_signal_actuation(
+                                signal,
+                                counter,
+                                cntr_marker,
+                            )
+                        )
+                txt.write('\n')
+
+        # НЕДОСТОВЕРНОСТИ (сигналы без тушения)
+        if cntrs_without_ff['Недостоверности']:
+
+            txt.write('\n// Недостоверности (сигналы без тушения)\n')
+
+            cntr_marker = cntrs_markers['Недостоверности']
+            counter = f'{position}_{cntr_marker}_CNT'
+
+            for sigtype in config.sigtypes_for_falsities_in_counting:
+                txt.write(f'// {sigtype}\n')
+                for signal in self.signals_list:
+                    if (
+                            signal.sigtype == sigtype
+                            and
+                            signal.ff_out is None
+                            and
+                            (signal.location is None
+                             or
+                             (isinstance(signal.location, Location)
+                              and
+                              signal.location.fire_fighting_cntrs is None))
+                    ):
+                        txt.write(
+                            self.__counter_one_signal_actuation(
+                                signal,
+                                counter,
+                                cntr_marker,
+                            )
+                        )
+                txt.write('\n')
+
+        # СМЕЖНЫЕ СИСТЕМЫ
+        if len(self.xsy_counters) > 0:
+
+            txt.write('\n// Смежные системы\n')
+
+            cntr_marker = cntrs_markers["Пожары"]
+
+            iteration = 1
+            for counter in self.xsy_counters:
+                for location in self.locations_list:
+                    if (
+                            location.conterminal_systems_cntrs is not None
+                            and
+                            counter in location.conterminal_systems_cntrs
+                    ):
+                        self.__counter_with_condition_write_to_txt(
+                            txt,
+                            location,
+                            counter,
+                            cntr_marker,
+                        )
+                if iteration != len(self.xsy_counters):
+                    txt.write('\n')
+                iteration += 1
+
+        # ПОЖАРЫ (сигналы без тушения)
+        if cntrs_without_ff['Пожары']:
+
+            txt.write('\n// Пожары (сигналы без тушения)\n')
+
+            cntr_marker = cntrs_markers['Пожары']
+            counter = f'{position}_{cntr_marker}_CNT'
+
+            for location in self.locations_list:
+                if location.fire_cntr:
+                    self.__counter_with_condition_write_to_txt(
+                            txt,
+                            location,
+                            counter,
+                            cntr_marker,
+                        )
+
+        # ВНИМАНИЯ (сигналы без тушения)
+        if cntrs_without_ff['Внимания']:
+
+            txt.write('\n// Внимания (сигналы без тушения)\n')
+
+            cntr_marker = cntrs_markers['Внимания']
+            counter = f'{position}_{cntr_marker}_CNT'
+
+            for location in self.locations_list:
+                if (
+                        location.warning_cntr
+                        and
+                        location.fire_fightings_cntrs is None
+                ):
+                    for signal in location.signals_list:
+                        if signal.ff_out is None:
+                            txt.write(
+                                self.__counter_one_signal_actuation(
+                                    signal,
+                                    counter,
+                                    cntr_marker,
+                                )
+                            )
+                txt.write('\n')
+
+        # СЧЕТЧИКИ ИП С ТУШЕНИЕМ
+        # НЕИСПРАВНОСТИ (сигналы с тушением)
+        if cntrs_with_ff['Неисправности']:
+
+            txt.write('\n// Неисправности (сигналы с тушением)\n')
+
+            iteration = 1
+
+            cntr_marker = cntrs_markers['Неисправности']
+            for upg_marker in self.upg_markers:
+                counter = f'{position}_{cntr_marker}_{upg_marker}_CNT'
+
+                for sigtype in config.sigtypes_for_faults_in_counting:
+                    txt.write(f'// {sigtype}\n')
+                    for signal in self.signals_list:
+                        if (
+                                signal.sigtype == sigtype
+                                and
+                                (signal.ff_out is not None
+                                 or
+                                 (isinstance(signal.location, Location)
+                                  and
+                                  signal
+                                  .location.fire_fighting_cntrs is not None))
+                        ):
+                            txt.write(
+                                self.__counter_one_signal_actuation(
+                                    signal,
+                                    counter,
+                                    cntr_marker,
+                                )
+                            )
+                    txt.write('\n')
+                if iteration != len(self.upg_markers):
+                    txt.write('\n')
+                iteration += 1
+
+        # НЕДОСТОВЕРНОСТИ (сигналы с тушением)
+        if cntrs_with_ff['Недостоверности']:
+
+            txt.write('\n// Недостоверности (сигналы с тушением)\n')
+
+            iteration = 1
+
+            cntr_marker = cntrs_markers['Недостоверности']
+            for upg_marker in self.upg_markers:
+                counter = f'{position}_{cntr_marker}_{upg_marker}_CNT'
+
+                for sigtype in config.sigtypes_for_falsities_in_counting:
+                    txt.write(f'// {sigtype}\n')
+                    for signal in self.signals_list:
+                        if (
+                                signal.sigtype == sigtype
+                                and
+                                (signal.ff_out is not None
+                                 or
+                                 (isinstance(signal.location, Location)
+                                  and
+                                  signal
+                                  .location.fire_fighting_cntrs is not None))
+                        ):
+                            txt.write(
+                                self.__counter_one_signal_actuation(
+                                    signal,
+                                    counter,
+                                    cntr_marker,
+                                )
+                            )
+                    txt.write('\n')
+                if iteration != len(self.upg_markers):
+                    txt.write('\n')
+                iteration += 1
+
+        # ПОЖАРОТУШЕНИЯ (Пожары с тушением)
         if (
                 self.signals_list
-                    .contain
-                ):
+                .contains_signals_with_fire_fighting_for_counting()
+        ):
 
-                    txt.write('\n//Ремонты, отключения\n')
+            txt.write('\n// Пожаротушения (пожары с тушением)\n')
 
-                    cntr_marker = cntrs_markers['Ремонты']
+            iteration = 1
 
-                    counter = f'{position_name}{cntr_marker}_CNT'
+            cntr_marker = cntrs_markers['Пожары']
+            for counter in self.upg_counters:
 
-                    for lst in [buttons_sensors, actuators]:
-                        for classifier in lst:
+                for location in self.locations_list:
+                    if (
+                            location.fire_fightings_cntrs is not None
+                            and
+                            counter in location.fire_fightings_cntrs
+                    ):
+                        self.__counter_with_condition_write_to_txt(
+                            txt,
+                            location,
+                            counter,
+                            cntr_marker,
+                        )
+                if iteration != len(self.upg_counters):
+                    txt.write('\n')
+                iteration += 1
 
-                            for signal in self.signals_list:
-                                if signal.classifier == classifier:
-                                    txt.write(
-                                        signal.one_signal_for_counting(
-                                            counter,
-                                            cntr_marker,
-                                        )
-                                    )
-                        if lst == buttons_sensors:
-                            txt.write('\n')
+        # ВНИМАНИЯ (сигналы без тушения)
+        if cntrs_without_ff['Внимания']:
+
+            txt.write('\n// Внимания (сигналы с тушением)\n')
+
+            cntr_marker = cntrs_markers['Внимания']
+            for upg_marker in self.upg_markers:
+                counter = f'{position}_{cntr_marker}_{upg_marker}_CNT'
+
+                for location in self.locations_list:
+                    if (
+                            location.warning_cntr
+                            and
+                            location.fire_fightings_cntrs is not None
+                    ):
+                        for signal in location.signals_list:
+                            txt.write(
+                                self.__counter_one_signal_actuation(
+                                    signal,
+                                    counter,
+                                    cntr_marker,
+                                )
+                            )
+                txt.write('\n')
+
+        # СЧЕТЧИКИ РЕЖИМА
+        if len(self.upg_counters) != 0:
+            txt.write(
+
+                '\n// Счетчик режима "Идет отсчет до начала тушения"\n'
+                '{0}XRFD_CNT:=Count({0}UPG.XFDN, {0}XRFD_CNT);\n\n'
+                .format(position),
+
+                '// Счетчик режима "Идет тушение"\n'
+                '{0}XRFN_CNT:=Count({0}UPG.OF1N, {0}XRFN_CNT);\n'
+                .format(position),
+
+            )
+
+        # ОБЩИЕ СЧЕТЧИКИ
+        txt.write('\n//Общие счетчики\n')
+
+        for upg_marker in self.upg_markers:
+            txt.write(
+                '{0}XFRX_CNT:=Plus({0}XFRX_{1}_CNT, {0}XFRX_CNT);\n'
+                '{0}XWRX_CNT:=Plus({0}XWRX_{1}_CNT, {0}XWRX_CNT);\n'
+                '{0}FXXX_CNT:=Plus({0}FXXX_{1}_CNT, {0}FXXX_CNT);\n'
+                '{0}DVXX_CNT:=Plus({0}DVXX_{1}_CNT, {0}DVXX_CNT);\n\n'
+                '{0}UPG_XFRX:={0}XFRX_{1}_CNT > 0;\n'
+                '{0}UPG_XWRX:={0}XWRX_{1}_CNT > 0;\n'
+                '{0}UPG_FXXX:={0}FXXX_{1}_CNT > 0 OR {0}DVXX_{1}_CNT > 0;\n\n'
+                .format(position, upg_marker)
+            )
+
+        txt.write(
+            '{0}XFRX:={0}XFRX_CNT > 0;\n'
+            '{0}XWRX:={0}XWRX_CNT > 0;\n'
+            '{0}FXXX:={0}FXXX_CNT > 0;\n'
+            '{0}DVXX:={0}DVXX_CNT > 0;\n'
+            '{0}XCIM:={0}XCIM_CNT > 0;\n'
+            '{0}XRPX:={0}XRPX_CNT > 0;\n'
+            .format(position)
+        )
