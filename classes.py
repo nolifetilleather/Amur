@@ -957,3 +957,205 @@ class Position:
             '{0}XRPX:={0}XRPX_CNT > 0;\n'
             .format(position)
         )
+
+    def weintek_write_to_txt(self, txt):
+
+        import pandas as pd
+        data = pd.DataFrame(
+            None,
+            columns=[
+                'Name',
+                'Address 1',
+                'Address 2',
+                'Address 3',
+                'Address 4',
+                'Equipment type',
+                'Tag',
+                'MBIN',
+                'Status',
+                'XVLX',
+                'Blnk',
+                'Blnk_RP / Blnk_Fr',
+                'XRPX',
+                'XCIM',
+            ],
+            index=range(len(self.signals_list))
+        )
+
+        di_iteration = 0
+        di_cnt = 0
+        for sigtype in config.sigtypes_di_for_weintek:
+            for signal in self.signals_list:
+                if signal.sigtype == sigtype:
+                    data['Name'][di_iteration] = signal.name
+                    data['Tag'][di_iteration] = f'(* {signal.name} *)'
+                    data['Equipment type'][di_iteration] = '// Извещатели'
+                    data['Address 1'][di_iteration] = (
+                        int(self.izv_addr)
+                        +
+                        di_iteration
+                        +
+                        di_cnt
+                    )
+                    data['Address 2'][di_iteration] = (
+                            int(self.izv_addr)
+                            +
+                            di_iteration
+                            +
+                            di_cnt
+                            +
+                            1
+                    )
+                    data['Address 3'][di_iteration] = (
+                            int(self.izv_addr)
+                            +
+                            di_iteration
+                            +
+                            di_cnt
+                            +
+                            2
+                    )
+                    data['Address 4'][di_iteration] = (
+                            int(self.izv_addr)
+                            +
+                            di_iteration
+                            +
+                            di_cnt
+                            +
+                            3
+                    )
+                    di_iteration += 1
+                    di_cnt += 3
+
+        do_iteration = 0
+        do_cnt = 0
+        for sigtype in config.sigtypes_do_for_weintek:
+            for signal in self.signals_list:
+                if signal.sigtype == sigtype:
+                    num = do_iteration + di_iteration
+                    data['Name'][num] = signal.name
+                    data['Tag'][num] = f'(* {signal.name} *)'
+                    data['Equipment type'][num] = '// Оповещатели'
+                    data['Address 1'][num] = (
+                        int(self.opv_addr)
+                        +
+                        do_iteration
+                        +
+                        do_cnt
+                    )
+                    data['Address 2'][num] = (
+                            int(self.opv_addr)
+                            +
+                            do_iteration
+                            +
+                            do_cnt
+                            +
+                            1
+                    )
+                    data['Address 3'][num] = (
+                            int(self.opv_addr)
+                            +
+                            do_iteration
+                            +
+                            do_cnt
+                            +
+                            2
+                    )
+                    do_iteration += 1
+                    do_cnt += 2
+
+        for i in range(len(data)):
+
+            data['MBIN'][i] = \
+                f'{data["Name"][i]}.MBIN:=' \
+                f'_IO_IX{self.plc.reg}_0_{data["Address 1"][i]};'
+
+            data['Status'][i] = \
+                f'_IO_QX{self.plc.reg}_1_{data["Address 1"][i]}:=' \
+                f'{data["Name"][i]}.Status;'
+
+            data['Blnk'][i] = \
+                f'_IO_QX{self.plc.reg}_1_{data["Address 1"][i]}:=' \
+                f'{data["Name"][i]}.Blnk;'
+
+            data['XRPX'][i] = \
+                f'_IO_QX{self.plc.coil}_1_{data["Address 3"][i]}:=' \
+                f'{data["Name"][i]}.XRPX;'
+
+            if data['Equipment type'][i] == '// Извещатели':
+
+                data['XCIM'][i] = \
+                    f'_IO_QX{self.plc.coil}_1_{data["Address 4"][i]}:=' \
+                    f'{data["Name"][i]}.XCIM;'
+
+                data['XVLX'][i] = \
+                    f'_IO_QX{self.plc.reg}_1_{data["Address 3"][i]}:=' \
+                    f'{data["Name"][i]}.XVLX'
+
+                data['Blnk_RP / Blnk_Fr'][i] = \
+                    f'_IO_QX{self.plc.coil}_1_{data["Address 2"][i]}:=' \
+                    f'{data["Name"][i]}.Blnk_RP;'
+
+            elif data['Equipment type'][i] == '// Оповещатели':
+
+                data['Blnk_RP / Blnk_Fr'][i] = \
+                    f'_IO_QX{self.plc.coil}_1_{data["Address 2"][i]}:=' \
+                    f'{data["Name"][i]}.Blnk_Fr;'
+
+        if '// Извещатели' in list(data['Equipment type']):
+            txt.write('// Извещатели\n')
+            for i in range(len(data)):
+                if data['Equipment type'][i] == '// Извещатели':
+                    txt.write(
+                        f'{data["Tag"][i]}\n'
+                        f'{data["MBIN"][i]}\n'
+                        f'{data["Status"][i]}\n'
+                        f'{data["XVLX"][i]}\n'
+                        f'{data["Blnk"][i]}\n'
+                        f'{data["Blnk_RP / Blnk_Fr"][i]}\n'
+                        f'{data["XRPX"][i]}\n'
+                        f'{data["XCIM"][i]}\n\n'
+                    )
+
+        if '// Оповещатели' in list(data['Equipment type']):
+            txt.write('// Оповещатели\n')
+            for i in range(len(data)):
+                if data['Equipment type'][i] == '// Оповещатели':
+                    txt.write(
+                        f'{data["Tag"][i]}\n'
+                        f'{data["MBIN"][i]}\n'
+                        f'{data["Status"][i]}\n'
+                        f'{data["Blnk"][i]}\n'
+                        f'{data["Blnk_RP / Blnk_Fr"][i]}\n'
+                        f'{data["XRPX"][i]}\n\n'
+                    )
+
+        if self.tush_addr is not None:
+            txt.write('// Тушение\n')
+            txt.write(f'(* {self.name_for_comment} *)\n')
+            txt.write(
+                f'{self.name}_UPG.MBIN:='
+                f'_IO_IX{self.plc.reg}_0_{self.tush_addr};\n'
+            )
+            for i in range(len(config.weintek_upg_tails_reg)):
+                tail = config.weintek_upg_tails_reg[i]
+                txt.write(
+                    f'_IO_QX{self.plc.reg}_1_{int(self.tush_addr)+2+i}:='
+                    f'{self.name}_UPG.{tail};\n'
+                )
+            for i in range(len(config.weintek_upg_tails_coils)):
+                tail = config.weintek_upg_tails_coils[i]
+                txt.write(
+                    f'_IO_QX{self.plc.coil}_1_{int(self.tush_addr)+2+i}:='
+                    f'{self.name}_UPG.{tail};\n'
+                )
+            txt.write(
+                f'_IO_QX{self.plc.coil}_1_{int(self.tush_addr)+7}:='
+                f'{self.name}_UPG.XCPX AND '
+                f'{self.name}_UPG.XDOF;\n'
+            )
+
+        data.to_excel(
+            fr'{self.plc.output_path}\weintek_table.xls',
+            index=False,
+        )

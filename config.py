@@ -12,6 +12,13 @@ sigtypes_for_falsities_in_counting = []
 
 cntrs_dict = {}
 
+# $$$$$$$$$$$$$$$$$$$$$$$$$$$$$ WEINTEK $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+sigtypes_di_for_weintek = []
+sigtypes_do_for_weintek = []
+weintek_upg_tails_reg = []
+weintek_upg_tails_coils =[]
+
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$ DIAG_ST $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 sigtypes_for_diag_st = []
