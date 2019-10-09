@@ -15,6 +15,15 @@ class Signal:
             address=None,
             styp=None,
     ):
+
+        if not isinstance(plc, PLC):
+            raise ValueError(
+                'Аргуметом plc при создании '
+                'экземпляра Signal'
+                'может выступать только '
+                'экземпляр/наследник класса PLC!'
+            )
+
         self.name = name.replace('-', '_').replace(' ', '')
         if not self.name[0].isalpha():
             self.name = 'P' + self.name
@@ -280,6 +289,15 @@ class Position:
             opv_addr=None,
             tush_addr=None,
     ):
+
+        if not isinstance(plc, PLC):
+            raise ValueError(
+                'Аргуметом plc при создании '
+                'экземпляра Position'
+                'может выступать только '
+                'экземпляр/наследник класса PLC!'
+            )
+
         self.plc = plc
         self.name = name.replace(' ', '').replace('-', '_')
         if not self.name[0].isalpha():
@@ -1162,6 +1180,7 @@ class Position:
 
 
 class Device:
+
     def __init__(
             self,
             plc,
@@ -1192,6 +1211,7 @@ class Device:
         self.m = m
         self.s = s
 
+    # ВЫЗОВ БЛОКОВ
     def call_for_mops_mups_text(self):
 
         if self.devtype == 'MOPS':
@@ -1199,33 +1219,33 @@ class Device:
             for i in range(len(config.mops_args)-1):
                 args += f'.{config.mops_args[i]}, '
             args += f'.{config.mops_args[-1]}'
-            result = f'{self.name}({args});\n'
-            return result
+            text = f'{self.name}({args});\n'
+            return text
 
         elif self.devtype == 'MUPS':
             args = ''
             for i in range(len(config.mups_args) - 1):
                 args += f'.{config.mups_args[i]}, '
             args += f'.{config.mups_args[-1]}'
-            result = f'{self.name}({args});\n'
-            return result
+            text = f'{self.name}({args});\n'
+            return text
 
         elif self.devtype == 'MOPS3a':
             args = f'_IO_IX{self.input_index}_0_3, '
             for i in range(len(config.mops3a_args) - 1):
                 args += f'{config.mops3a_args[i]}, '
             args += config.mops3a_args[-1]
-            result = f'{self.name}({args});\n'
-            return result
+            text = f'{self.name}({args});\n'
+            return text
 
+    # ПЕРЕКЛАДЫВАНИЕ
     @staticmethod
     def __shift(device, devtype, args, cnt=0):
 
         if device.devtype == devtype:
-
             result = ''
-
             for arg in args:
+
                 result += \
                     f'{device.name}.{arg}:=' \
                     f'_IO_IX{device.input_index}_0_{cnt};\n'
@@ -1240,13 +1260,12 @@ class Device:
     def mups_shifting_text(self):
         return self.__shift(self, 'MUPS', config.mups_args, cnt=4)
 
+    # IVXX IDVX
     @staticmethod
     def __ivxx(device, devtype, args):
 
         if device.devtype == devtype:
-
-            result = f'(*{device.name}*)\n'
-
+            result = f'(* {device.name} *)\n'
             for i in range(len(args)):
 
                 if isinstance(device.signals_list[i], Signal):
@@ -1255,7 +1274,7 @@ class Device:
                         f'{signal_name}.IVXX:={device.name}.{args[i]}o;\n'
 
                 elif device.signals_list[i] == '0':
-                    result += f'//{args[i]} reserved\n'
+                    result += f'// {args[i]} reserved\n'
 
             result += '\n'
             return result
@@ -1268,10 +1287,9 @@ class Device:
 
     @staticmethod
     def __idvx(device, devtype, args):
+
         if device.devtype == devtype:
-
-            result = f'(*{device.name}*)\n'
-
+            result = f'(* {device.name} *)\n'
             for i in range(len(args)):
 
                 if isinstance(device.signals_list[i], Signal):
@@ -1280,7 +1298,7 @@ class Device:
                         f'{signal_name}.IDVX:={device.name}.DVXX;\n'
 
                 elif device.signals_list[i] == '0':
-                    result += f'//{args[i]} reserved\n'
+                    result += f'// {args[i]} reserved\n'
 
             result += '\n'
             return result
@@ -1291,11 +1309,11 @@ class Device:
     def mups_idvx_text(self):
         return self.__idvx(self, 'MUPS', config.mups_args)
 
+    # OXON
     def mups_oxon_text(self):
+
         if self.devtype == 'MUPS':
-
-            text = f'(*{self.name}*)\n'
-
+            text = f'(* {self.name} *)\n'
             for i in range(len(config.mups_args)):
 
                 if isinstance(self.signals_list[i], Signal):
@@ -1305,37 +1323,37 @@ class Device:
                         f'{signal_name}.OXON;\n'
 
                 elif self.signals_list[i] == '0':
-                    text += f'//{config.mups_args[i]} reserved\n'
+                    text += f'// {config.mups_args[i]} reserved\n'
 
             text += '\n'
             return text
 
+    # СБРОС МОСОВ
     def mops_reset_text(self):
+
         if self.devtype == 'MOPS':
-
-            result = f'(*{self.name}*)\n'
+            result = f'(* {self.name} *)\n'
             args = config.mops_args
-
             for i in range(len(args)):
 
                 if isinstance(self.signals_list[i], Signal):
-
                     signal_name = self.signals_list[i].name
                     result += \
                         f'_IO_QX{self.output_index}_1_0.ValueDINT' \
                         f':={signal_name}.ORS3;\n'
 
                 elif self.signals_list[i] == '0':
-                    result += f'//{args[i]} reserved\n'
+                    result += f'// {args[i]} reserved\n'
 
             result += '\n'
             return result
 
+    #  МОПСЫ 3а
     def __mops3a_has_any_m(self):
         if self.devtype == 'MOPS3a':
             flg = False
             for signal in self.signals_list:
-                if signal.classifier in config.mops3a_m_for:
+                if signal.styp in config.styp_for_m_in_mops3a:
                     flg = True
                     break
             return flg
@@ -1347,24 +1365,28 @@ class Device:
         else:
             return (x * 3) % 90 - 2
 
+    def __m_name(self, addr, sm):
+        return f'M{self.name[4:]}_{sm}_A{addr}'
+
+    def __m_name_s_f_s(self, first, second):
+        return f'M{self.name[4:]}_S_{first}_{second}'
+
     def mops3a_m_text(self):
 
         if self.__mops3a_has_any_m():
 
-            text = f'(*{self.name}*)\n'
-
+            text = f'(* {self.name} *)\n'
             text += '//Ручные извещатели\n'
             m_index_num = 0
-
             m_signals_lst = []
+
             for signal in self.signals_list:
-                if signal.classifier in config.mops3a_m_for:
+                if signal.styp in config.styp_for_m_in_mops3a:
                     m_signals_lst.append(signal)
 
-            def address_int_value(sgnl):
-                return int(sgnl.address)
-
-            m_signals_lst.sort(key=address_int_value)
+            m_signals_lst.sort(
+                key=lambda sgnl: int(sgnl.address)
+            )
 
             for signal in m_signals_lst:
 
@@ -1387,8 +1409,7 @@ class Device:
 
                 three_addr = self.__three_addr(int(addr))
 
-                m_name = \
-                    f'M{self.name[4:]}_M_A{addr}'
+                m_name = self.__m_name(addr, 'M')
                 self.plc.m_names.add(m_name)
 
                 # Аргуметы
@@ -1424,7 +1445,7 @@ class Device:
         if self.devtype == 'MOPS3a':
             flg = False
             for signal in self.signals_list:
-                if signal.classifier in config.mops3a_s_for:
+                if signal.styp in config.styp_for_s_in_mops3a:
                     flg = True
                     break
             return flg
@@ -1433,29 +1454,26 @@ class Device:
 
         if self.__mops3a_has_any_s():
 
-            text = f'(*{self.name}*)\n'
-
+            text = f'(* {self.name} *)\n'
             s_signals_lst = []
+
             for signal in self.signals_list:
-                if signal.classifier in config.mops3a_s_for:
+                if signal.styp in config.styp_for_s_in_mops3a:
                     s_signals_lst.append(signal)
 
-            def address_int_value(sgnl):
-                return int(sgnl.address)
-
-            s_signals_lst.sort(key=address_int_value)
+            s_signals_lst.sort(
+                key=lambda sgnl: int(sgnl.address)
+            )
 
             from math import floor
 
-            text += '//Дымовые и тепловые извещатели\n'
+            text += '// Дымовые и тепловые извещатели\n'
             s_index_num = 0
-
-            iteration = 0
             prev_addr = None
             prev_m_name = None
 
+            iteration = 0
             for signal in s_signals_lst:
-
                 iteration += 1
 
                 if len(self.s) > 1:
@@ -1475,7 +1493,7 @@ class Device:
                 if len(addr) == 1:
                     addr = '0' + addr
 
-                m_name = f'M{self.name[4:]}_S_A{addr}'
+                m_name = self.__m_name(addr, 'M')
                 self.plc.m_names.add(m_name)
 
                 three_addr = self.__three_addr(int(addr))
@@ -1580,18 +1598,19 @@ class Device:
             text += '\n'
             return text
 
+    # ТЕСТ/СБРОС МОПСОВ 3А
     def mops3a_test_reset_text(self):
+
         if self.devtype == 'MOPS3a' and len(self.__reset_addresses) != 0:
 
             text = ''
-
             first = 1
             second = 16
             cnt = 0
 
             for addr in self.__reset_addresses:
 
-                m_name = f'M{self.name[4:]}_S_{first}_{second}'
+                m_name = self.__m_name_s_f_s(first, second)
 
                 # Аргуметы
                 arg1 = \
@@ -1618,26 +1637,23 @@ class Device:
                 second += 16
 
             text += '\n'
-
             first = 1
             second = 16
             cnt = 0
 
             for _ in self.__reset_addresses:
 
-                m_name = f'M{self.name[4:]}_S_{first}_{second}'
+                m_name = self.__m_name_s_f_s(first, second)
 
                 var1 = f'_IO_QX{self.input_index}_1_{78+cnt}.ValueDINT'
                 var2 = f'{m_name}.XTST'
 
-                text += \
-                    f'{var1}:={var2};\n'
+                text += f'{var1}:={var2};\n'
 
                 var1 = f'_IO_QX{self.input_index}_1_{14 + cnt}.ValueDINT'
                 var2 = f'{m_name}.XRST'
 
-                text += \
-                    f'{var1}:={var2};\n'
+                text += f'{var1}:={var2};\n'
 
                 first += 16
                 second += 16
@@ -1647,20 +1663,18 @@ class Device:
             return text
 
     @staticmethod
-    def __ivxx_xvlx_idvx_dvxx(device, arg1, arg2, classifiers, ms):
+    def __ivxx_xvlx_idvx_dvxx(device, arg1, arg2, styps_lst, ms):
 
         text = ''
-
         selected_signals_lst = []
 
         for signal in device.signals_list:
-            if signal.classifier in classifiers:
+            if signal.styp in styps_lst:
                 selected_signals_lst.append(signal)
 
-        def address_int_value(sgnl):
-            return int(sgnl.address)
-
-        selected_signals_lst.sort(key=address_int_value)
+        selected_signals_lst.sort(
+            key=lambda sgnl: int(sgnl.address)
+        )
 
         for signal in selected_signals_lst:
 
@@ -1668,65 +1682,106 @@ class Device:
             if len(addr) == 1:
                 addr = '0' + addr
 
-            m_name = f'M{device.name[4:]}_{ms}_A{addr}'
+            m_name = Device.__m_name(device, addr, ms)
 
-            text += \
-                f'{signal.name}.{arg1}:={m_name}.{arg2};\n'
+            text += f'{signal.name}.{arg1}:={m_name}.{arg2};\n'
 
         text += '\n'
         return text
 
     def mops3a_m_ivxx_xvlx_text(self):
         if self.__mops3a_has_any_m():
-            text = f'(*{self.name}*)\n'
-            text += '//Ручные извещатели\n'
+            text = f'(* {self.name} *)\n'
+            text += '// Ручные извещатели\n'
             text += self.__ivxx_xvlx_idvx_dvxx(
                 self,
                 'IVXX',
                 'XVLX',
-                config.mops3a_m_for,
+                config.styp_for_m_in_mops3a,
                 'M'
             )
             return text
 
     def mops3a_s_ivxx_xvlx_text(self):
         if self.__mops3a_has_any_s():
-            text = f'(*{self.name}*)\n'
-            text += '//Дымовые и тепловые извещатели\n'
+            text = f'(* {self.name} *)\n'
+            text += '// Дымовые и тепловые извещатели\n'
             text += self.__ivxx_xvlx_idvx_dvxx(
                 self,
                 'IVXX',
                 'XVLX',
-                config.mops3a_s_for,
+                config.styp_for_s_in_mops3a,
                 'S'
             )
             return text
 
     def mops3a_m_idvx_dvxx_text(self):
         if self.__mops3a_has_any_m():
-            text = f'(*{self.name}*)\n'
-            text += '//Ручные извещатели\n'
+            text = f'(* {self.name} *)\n'
+            text += '// Ручные извещатели\n'
             text += self.__ivxx_xvlx_idvx_dvxx(
                 self,
                 'IDVX',
                 'DVXX',
-                config.mops3a_m_for,
+                config.styp_for_m_in_mops3a,
                 'M'
             )
             return text
 
     def mops3a_s_idvx_dvxx_text(self):
         if self.__mops3a_has_any_s():
-            text = f'(*{self.name}*)\n'
-            text += '//Дымовые и тепловые извещатели\n'
+            text = f'(* {self.name} *)\n'
+            text += '// Дымовые и тепловые извещатели\n'
             text += self.__ivxx_xvlx_idvx_dvxx(
                 self,
                 'IDVX',
                 'DVXX',
-                config.mops3a_s_for,
+                config.styp_for_s_in_mops3a,
                 'S',
             )
             return text
 
+
 class PLC:
-    pass
+
+    def __init__(
+            self,
+            name,
+            cabinet_category,
+            reset_position,
+            diag_addr=None,
+            reg=None,
+            coil=None,
+    ):
+        self.name = name
+        self.cabinet_category = cabinet_category
+        self.reset_position = reset_position
+
+        self.diag_addr = diag_addr
+        self.reg = reg
+        self.coil = coil
+
+        self.__signals_list = SignalsList()
+        self.__locations_list = []
+        self.__positions_list = []
+        self.__devices_list = []
+
+        self.upg_counters = set()
+        self.xsy_counters = set()
+        self.other_counters = set()
+        self.m_names = set()
+
+        self.signals_list_filled = False
+        self.ce_locations_filled = False
+        self.devices_list_filled = False
+
+        self.signals_reformed = False
+        self.locations_reformed = False
+        self.devices_reformed = False
+
+        self.devices_diag_signals_created = False
+
+        self.__counting_was_formed = False
+        self.__mops_mups_was_formed = False
+
+        self.output_path = None
