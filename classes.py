@@ -87,7 +87,7 @@ class SignalsList(list):
                 if (
                         signal.sigtype in sigtypes_list
                         and
-                        (signal.location.fire_fighting_cntrs is not None
+                        (signal.location.fire_fightings_cntrs is not None
                          or
                          signal.ff_out is not None)
                 ):
@@ -106,7 +106,7 @@ class SignalsList(list):
                 if (
                         signal.sigtype in sigtypes_list
                         and
-                        signal.location.fire_fighting_cntrs is None
+                        signal.location.fire_fightings_cntrs is None
                         and
                         signal.ff_out is None
                 ):
@@ -120,32 +120,24 @@ class SignalsList(list):
         )
 
     def contains_signals_with_ff_out_for_counting(self):
-        flg = False
-        for signal in self:
-            if (
-                    isinstance(signal, Signal)
-                    and
-                    signal.ff_out is not None
-                    and
-                    signal.sigtype in config.sigtypes_for_counting
-            ):
-                flg = True
-                break
-        return flg
+        return any(
+            isinstance(signal, Signal)
+            and
+            signal.ff_out is not None
+            and
+            signal.sigtype in config.sigtypes_for_counting
+            for signal in self
+        )
 
     def contains_signals_without_ff_out_for_counting(self):
-        flg = False
-        for signal in self:
-            if (
-                    isinstance(signal, Signal)
-                    and
-                    signal.ff_out is None
-                    and
-                    signal.sigtype in config.sigtypes_for_counting
-            ):
-                flg = True
-                break
-        return flg
+        return any(
+            isinstance(signal, Signal)
+            and
+            signal.ff_out is None
+            and
+            signal.sigtype in config.sigtypes_for_counting
+            for signal in self
+        )
 
     def contains_signals_with_fire_fighting_for_counting(self):
         flg = False
@@ -157,7 +149,7 @@ class SignalsList(list):
                             isinstance(signal.location, Location)
                     )
                     and
-                    signal.location.fire_fighting_cntrs is not None
+                    signal.location.fire_fightings_cntrs is not None
                     and
                     signal.sigtype in config.sigtypes_for_counting
             ):
@@ -175,7 +167,7 @@ class SignalsList(list):
                             isinstance(signal.location, Location)
                     )
                     and
-                    signal.location.fire_fighting_cntrs is None
+                    signal.location.fire_fightings_cntrs is None
                     and
                     signal.sigtype in config.sigtypes_for_counting
             ):
@@ -196,7 +188,7 @@ class SignalsList(list):
                         and
                         (signal.ff_out is not None
                          or
-                         signal.location.fire_fighting_cntrs is not None)
+                         signal.location.fire_fightings_cntrs is not None)
                 ):
                     flg = True
                     break
@@ -215,7 +207,7 @@ class SignalsList(list):
                         and
                         (signal.ff_out is None
                          and
-                         signal.location.fire_fighting_cntrs is None)
+                         signal.location.fire_fightings_cntrs is None)
                 ):
                     flg = True
                     break
@@ -226,7 +218,9 @@ class SignalsList(list):
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
     def contains_signals_for_diag_st(self):
-        return self.has_any_signal_with_sigtype_in(config.sigtypes_for_diag_st)
+        return self.has_any_signal_with_sigtype_in(
+            config.sigtypes_for_diag_st
+        )
 
 
 class Location:
@@ -236,7 +230,7 @@ class Location:
             name,
             warning_cntr=None,
             fire_cntr=None,
-            fire_fighting_cntrs=None,
+            fire_fightings_cntrs=None,
             conterminal_systems_cntrs=None,
             voting_logic=None,
     ):
@@ -247,7 +241,7 @@ class Location:
         self.name = name
         self.warning_cntr = warning_cntr
         self.fire_cntr = fire_cntr
-        self.fire_fighting_cntrs = fire_fighting_cntrs
+        self.fire_fightings_cntrs = fire_fightings_cntrs
         self.conterminal_systems_cntrs = conterminal_systems_cntrs
         self.voting_logic = voting_logic
 
@@ -324,12 +318,9 @@ class Position:
         которого == True.
         Если такого экземпляра нет - возвращает False.
         """
-        flg = False
-        for location in self.locations_list:
-            if location.warning_cntr:
-                flg = True
-                break
-        return flg
+        return (
+            any(location.warning_cntr for location in self.locations_list)
+        )
 
     def contains_locations_with_warning_and_fire_fighting(self):
         """
@@ -339,16 +330,12 @@ class Position:
         is not None.
         Если такого экземпляра нет - возвращает False.
         """
-        flg = False
-        for location in self.locations_list:
-            if (
-                    location.warning_cntr
-                    and
-                    location.fire_fightings_cntrs is not None
-            ):
-                flg = True
-                break
-        return flg
+        return any(
+            location.warning_cntr
+            and
+            location.fire_fightings_cntrs is not None
+            for location in self.locations_list
+        )
 
     def contains_locations_with_warning_without_fire_fighting(self):
         """
@@ -358,16 +345,12 @@ class Position:
         is None.
         Если такого экземпляра нет - возвращает False.
         """
-        flg = False
-        for location in self.locations_list:
-            if (
-                    location.warning_cntr
-                    and
-                    location.fire_fightings_cntrs is None
-            ):
-                flg = True
-                break
-        return flg
+        return any(
+            location.warning_cntr
+            and
+            location.fire_fightings_cntrs is None
+            for location in self.locations_list
+        )
 
     def contains_locations_with_fire(self):
         """
@@ -376,12 +359,9 @@ class Position:
         которого == True.
         Если такого экземпляра нет - возвращает False.
         """
-        flg = False
-        for location in self.locations_list:
-            if location.fire_cntr:
-                flg = True
-                break
-        return flg
+        return any(
+            location.fire_cntr for location in self.locations_list
+        )
 
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$$$$ ЗАПИСЬ ST КОДА В ФАЙЛЫ $$$$$$$$$$$$$$$$$$$
@@ -701,7 +681,7 @@ class Position:
                              or
                              (isinstance(signal.location, Location)
                               and
-                              signal.location.fire_fighting_cntrs is None))
+                              signal.location.fire_fightings_cntrs is None))
                     ):
                         txt.write(
                             self.__counter_one_signal_actuation(
@@ -732,7 +712,7 @@ class Position:
                              or
                              (isinstance(signal.location, Location)
                               and
-                              signal.location.fire_fighting_cntrs is None))
+                              signal.location.fire_fightings_cntrs is None))
                     ):
                         txt.write(
                             self.__counter_one_signal_actuation(
@@ -833,7 +813,7 @@ class Position:
                                  (isinstance(signal.location, Location)
                                   and
                                   signal
-                                  .location.fire_fighting_cntrs is not None))
+                                  .location.fire_fightings_cntrs is not None))
                         ):
                             txt.write(
                                 self.__counter_one_signal_actuation(
@@ -869,7 +849,7 @@ class Position:
                                  (isinstance(signal.location, Location)
                                   and
                                   signal
-                                  .location.fire_fighting_cntrs is not None))
+                                  .location.fire_fightings_cntrs is not None))
                         ):
                             txt.write(
                                 self.__counter_one_signal_actuation(
@@ -975,6 +955,8 @@ class Position:
             '{0}XRPX:={0}XRPX_CNT > 0;\n'
             .format(position)
         )
+
+        txt.write()
 
     def weintek_write_to_txt(self, txt):
 
@@ -1368,6 +1350,7 @@ class Device:
     def __m_name(self, addr, sm):
         return f'M{self.name[4:]}_{sm}_A{addr}'
 
+    # м-имя для теста/сброса МОПСов 3а
     def __m_name_s_f_s(self, first, second):
         return f'M{self.name[4:]}_S_{first}_{second}'
 
@@ -1785,3 +1768,911 @@ class PLC:
         self.__mops_mups_was_formed = False
 
         self.output_path = None
+
+    def change_output_path(self):
+        self.output_path = str(input(
+            'Введите путь для выходных файлов\n'
+        ))
+
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$ ЗАПОЛНЕНИЕ СПИСКОВ $$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+    def append_signal(self, obj):
+        if isinstance(obj, Signal):
+            self.__signals_list.append(obj)
+        else:
+            raise TypeError(
+                'Попытка добавить в список сигналов контроллера'
+                ' объект не являющийся экземпляром/наследником '
+                'класса Signal.'
+            )
+
+    def append_location(self, obj):
+        if isinstance(obj, Location):
+            self.__locations_list.append(obj)
+        else:
+            raise TypeError(
+                'Попытка добавить в список локаций контроллера'
+                ' объект не являющийся экземпляром/наследником'
+                ' класса Location.'
+            )
+
+    def append_position(self, obj):
+        if isinstance(obj, Position):
+            self.__positions_list.append(obj)
+        else:
+            raise TypeError(
+                'Попытка добавить в список позиций контроллера'
+                ' объект не являющийся экземпляром/наследником'
+                ' класса Position.'
+            )
+
+    def append_device(self, obj):
+        if isinstance(obj, Device):
+            self.__devices_list.append(obj)
+        else:
+            raise TypeError(
+                'Попытка добавить в список устройств контроллера'
+                ' объект не являющийся экземпляром/наследником'
+                ' класса Device.'
+            )
+
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$ ОПЕРАЦИИ НАД ОБЪЕКТАМИ В СПИСКАХ $$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+    def __fill_positions_signals_lists(self):
+        """
+        Заполнение signals_list экземпляров
+        Position находящихся в self.__positions_list
+        ссылками на экземпляры Signal.
+        Запись ссылок на экземпляры Position в
+        сооветствующие атрибуты экземпляров Signal.
+        """
+        for position in self.__positions_list:
+            for signal in self.__signals_list:
+                if signal.position == position.name:
+                    position.signals_list.append(signal)
+                    signal.position = position
+
+    def __fill_locations_signals_lists_and_position(self):
+        """
+        Заполнение signals_list экземпляров
+        Location находящихся в self.__locations_list
+        ссылками на экземпляры Signal.
+        Запись ссылок на экземпляры Location в
+        сооветствующие атрибуты экземпляров Signal.
+        """
+        for location in self.__locations_list:
+            for signal in self.__signals_list:
+                if location.name == signal.location:
+                    location.signals_list.append(signal)
+                    """
+                    Заменим строковое значение атрибута
+                    location объекта сигнала полученное
+                    при чтении входныъ данных ссылкой на
+                    соответствующий объект "локации".
+                    """
+                    signal.location = location
+            """
+            Проверка допустимости значений в signals_list
+            экземпляра Location.
+            Установка установка необходимых ссылок
+            в атрибутах экзмпляра Location и соответствующего
+            экземпляра Position на основе заполненного
+            signals_list.
+            """
+            location.position_check_and_set()
+
+    def __fill_counters(self):
+        """
+        Для каждой позиции:
+        Определение количесва счетчиков сигналов
+        в смежные системы.
+        Опредедение количества счетчиков для
+        систем пожаротушений.
+        Формирование имен для счетчиков.
+        Запись в соответсвующие атрибуты у
+        экземпляров Location.
+        """
+        for position in self.__positions_list:
+            conterminal_systems = set()  # все смежные системы на позиции
+            fire_fightings = set()  # все пожаротушения на позиции
+            for location in position.locations_list:
+                # Смежные системы
+                if location.conterminal_systems_cntrs is not None:
+                    cntrmnl_sstms_lst = location.conterminal_systems_cntrs
+                    for conterminal_system in cntrmnl_sstms_lst:
+                        conterminal_systems.add(conterminal_system)
+                # Пожаротушения
+                if location.fire_fightings_cntrs is not None:
+                    fr_fghtngs_lst = location.fire_fightings_cntrs
+                    for fire_fighting in fr_fghtngs_lst:
+                        fire_fightings.add(fire_fighting)
+
+            # словарь для смежных систем
+            xsy_uniq_locations = {}
+            # ключи - названия смежных систем, значения - "локации"
+            for conterminal_system in conterminal_systems:
+                xsy_uniq_locations[conterminal_system] = []
+                for location in position.locations_list:
+                    if location.conterminal_systems_cntrs is not None:
+                        if (
+                                conterminal_system
+                                in
+                                location.conterminal_systems_cntrs
+                        ):
+                            xsy_uniq_locations[conterminal_system].append(
+                                location.name
+                            )
+
+            # удаляем неуникальные по "локациям" смежные системы
+            lst_of_loc_lsts = []
+            xsy_uniq_locations_for_iter = xsy_uniq_locations.copy()
+            for conterminal_system in xsy_uniq_locations_for_iter:
+                lst = xsy_uniq_locations[conterminal_system]
+                if xsy_uniq_locations[conterminal_system] in lst_of_loc_lsts:
+                    del xsy_uniq_locations[conterminal_system]
+                lst_of_loc_lsts.append(lst)
+            xsy_uniq_locations_for_iter.clear()
+            lst_of_loc_lsts.clear()
+
+            """
+            Замена названий смежных систем из входных
+            данных во временном словаре на названия
+            счетчиков сигналов в эти смежные системы
+            принятые в проекте для дальнейшего использования
+            в коде на ST.
+            """
+
+            xsy_uniq_locations_for_iter = xsy_uniq_locations.copy()
+
+            # Если счетчиков смежных систем больше одного
+            num = 1  # в конце имени каджого добавляется порядковый номер
+            if xsy_uniq_locations_for_iter == 1:
+                num = ''
+
+            xsy_uniq_locations.clear()
+            for conterminal_system in xsy_uniq_locations_for_iter:
+                counter = \
+                    f'{position.name}_' \
+                    f'{config.cntrs_dict["Смежные системы"]}_CNT' \
+                    f'{num}'
+                xsy_uniq_locations[counter] = \
+                    xsy_uniq_locations_for_iter[conterminal_system]
+                # добавление в атрибут позиции
+                position.xsy_counters.append(counter)
+                num += 1
+            xsy_uniq_locations_for_iter.clear()
+
+            """
+            Заполнение атрибутов conterminal_systems_cntrs
+            экземпляров Location необходимыми для формирования
+            текста программ именами счетчиков сигналов в смежные
+            системы.
+            """
+
+            for location in position.locations_list:
+                # очистка от неактульных значений
+                location.conterminal_systems_cntrs = None
+                for conterminal_system in xsy_uniq_locations:
+                    if (
+                            location.name
+                            in
+                            xsy_uniq_locations[conterminal_system]
+                    ):
+                        if location.conterminal_systems_cntrs is None:
+                            location.conterminal_systems_cntrs = []
+                            location.conterminal_systems_cntrs.append(
+                                conterminal_system
+                            )
+                        else:
+                            location.conterminal_systems_cntrs.append(
+                                conterminal_system
+                            )
+
+            # словарь для пожаротушений
+            fire_fightings_locations = {}
+            # ключи - названия пожаротушений, значения - "локации"
+            for fire_fighting in fire_fightings:
+                fire_fightings_locations[fire_fighting] = []
+                for location in position.locations_list:
+                    if location.fire_fightings_cntrs is not None:
+                        if (
+                                fire_fighting
+                                in
+                                location.fire_fightings_cntrs
+                        ):
+                            fire_fightings_locations[fire_fighting].append(
+                                location.name
+                            )
+
+            """
+            Замена названий пожаротушений из входных
+            данных во временном словаре на названия
+            счетчиков сигналов в эти пожаротушения
+            принятые в проекте для дальнейшего
+            использования в коде на ST.
+            """
+
+            fire_fightings_locations_for_iter = fire_fightings_locations.copy()
+            fire_fightings_locations.clear()
+            for fire_fighting in fire_fightings_locations_for_iter:
+                fire_fightings_locations[
+                    f'{position.name}_'
+                    f'{config.cntrs_dict["Пожары"]}_'
+                    f'{fire_fighting}_CNT'
+                ] = fire_fightings_locations_for_iter[fire_fighting]
+
+                # добавление в атрибуты экземпляра позиции
+                position.upg_counters.append(
+                    f'{position.name}_'
+                    f'{config.cntrs_dict["Пожары"]}_'
+                    f'{fire_fighting}_CNT'
+                )
+
+                # для использования в именах других счетчиков
+                # в срабатывании которых будут участвовать
+                # сигналы с тушением
+                position.upg_markers.append(fire_fighting)
+
+            fire_fightings_locations_for_iter.clear()
+
+            """
+            Заполнение атрибутов fire_fightings_cntrs
+            экземпляров Location необходимыми для формирования
+            текста программ именами счетчиков сигналов в
+            пожаротушения.
+            """
+
+            for location in position.locations_list:
+                # очистка от неактульных значений
+                location.fire_fightings_cntrs = None
+                for fire_fighting in fire_fightings_locations:
+                    if (
+                            location.name
+                            in
+                            fire_fightings_locations[fire_fighting]
+                    ):
+                        if location.fire_fightings_cntrs is None:
+                            location.fire_fightings_cntrs = []
+                            location.fire_fightings_cntrs.append(
+                                fire_fighting
+                            )
+                        else:
+                            location.fire_fightings_cntrs.append(
+                                fire_fighting
+                            )
+
+    def __fill_devices_signals_lists(self):
+
+        for device in self.__devices_list:
+
+            if device.devtype == 'MOPS':
+                for signal in self.__signals_list:
+                    if signal.device == device.name:
+                        addr = signal.address
+                        if (
+                                addr[0:2] != 'CH'
+                                or
+                                int(addr[2:]) > len(config.mops_args)
+                                or
+                                int(addr[2:]) < 1
+                        ):
+                            raise ValueError(
+                                'Обнаружено некорректное значение'
+                                'атрибута .address экземпляра Signal.\n'
+                                f'Проверьте input.xlsx (сигнал {signal.name},'
+                                ' см. значение в столбце Address).'
+                            )
+                        else:
+                            device.signals_list[int(addr[2:])-1] = signal
+
+            elif device.devtype == 'MUPS':
+                for signal in self.__signals_list:
+                    if signal.device == device.name:
+                        addr = signal.address
+                        if (
+                                addr[0:2] != 'CH'
+                                or
+                                int(addr[2:]) > len(config.mups_args)
+                                or
+                                int(addr[2:]) < 1
+                        ):
+                            raise ValueError(
+                                'Обнаружено некорректное значение'
+                                'атрибута .address экземпляра Signal.\n'
+                                f'Проверьте input.xlsx (сигнал {signal.name},'
+                                ' см. значение в столбце Address).'
+                            )
+                        else:
+                            device.signals_list[int(addr[2:])-1] = signal
+
+            elif device.devtype == 'MOPS3a':
+                for signal in self.__signals_list:
+                    if signal.device == device.name:
+                        device.signals_list.append(signal)
+
+    def __create_devices_diag_signals(self):
+
+        diag_device_position = Position(name='Diag_Devices_Position', plc=self)
+        d = {
+            'MOPS3a': 'Mops3A',
+            'MOPS': 'Mops3',
+            'MUPS': 'Mups3',
+        }
+        for device in self.__devices_list:
+            signal = Signal(
+                name=device.name,
+                plc=self,
+                sigtype=d[device.devtype],
+                position=diag_device_position,
+            )
+            self.append_signal(signal)
+
+    def input_data_reformation(self):
+        """
+        Обработка данных полученных при выполнении
+        функции read() из модуля read_input.
+        "Взведение" флагов, указывающих на то,
+        какие именно операции по обработке данных
+        были выполнены.
+        """
+        print('\n\tПреобразование входных данных...\n')
+
+        if self.signals_list_filled:
+            self.__fill_positions_signals_lists()
+            self.signals_reformed = True
+
+            if self.ce_locations_filled:
+                self.__fill_locations_signals_lists_and_position()
+                self.__fill_counters()
+                self.locations_reformed = True
+
+            if self.devices_list_filled:
+                self.__fill_devices_signals_lists()
+                self.devices_reformed = True
+                self.__create_devices_diag_signals()
+                self.devices_diag_signals_created = True
+
+        print(
+            'Атрибуты экземпляров сигналов заполнены по словарю, '
+            'экземпляры сигналов и позиций соотнесены: '
+            f'{self.signals_reformed}'
+        )
+        print(
+            'Экземпляры сигналов, локаций и позиций соотнесены, '
+            f'созданы имена счетчиков: {self.locations_reformed}'
+        )
+        print(
+            'Экземпляры сигналов и устройств соотнесены: '
+            f'{self.devices_reformed}'
+        )
+        print(
+            f'Экземпляры сигналов диагностики '
+            f'устройств созданы: {self.devices_diag_signals_created}'
+        )
+        print()
+
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$ ПРОВЕРКА ГОТОВНОСТИ К ФОРМИРОВАНИЮ ПРОГРАММ $$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+    def ready_for_counting(self):
+        return (
+            self.__signals_list.contains_signals_for_counting()
+            and
+            self.locations_reformed
+        )
+
+    def ready_for_alarming(self):
+        return (
+            self.ready_for_counting()
+            and
+            self.__signals_list.contains_signals_for_alarming()
+        )
+
+    def ready_for_output(self):
+        return (
+            self.__signals_list.contains_signals_for_output()
+            and
+            self.signals_reformed
+        )
+
+    def ready_for_input(self):
+        return (
+            self.__signals_list.contains_signals_for_input()
+            and
+            self.signals_reformed
+        )
+
+    def ready_for_mops_mups(self):
+        return self.devices_reformed
+
+    def ready_for_datatable(self):
+        return self.__counting_was_formed and self.__mops_mups_was_formed
+
+    def ready_for_weintek(self):
+        return (
+                self.signals_list_filled
+                and
+                self.signals_reformed
+                and
+                any(position.izv_addr is not None
+                    and
+                    position.opv_addr is not None
+                    and
+                    len(position.signals_list) != 0
+                    for position in self.__positions_list)
+                and
+                self.devices_diag_signals_created
+        )
+
+    def ready_for_diag_st(self):
+        return self.__signals_list.contains_signals_for_diag_st()
+
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$ ФОРМИРОВАНИЕ ТЕКСТОВ ПРОГРАММ $$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+    # OUTPUT
+    def establishing_output_txt(self):
+        if self.ready_for_input():
+            txt = open(fr'{self.output_path}\Output.txt', 'w')
+            for position in self.__positions_list:
+                if position.signals_list.contains_signals_for_output():
+                    position.output_write_to_txt(txt)
+            txt.close()
+            return True
+
+    # INPUT
+    def establishing_input_txt(self):
+        if self.ready_for_input():
+            txt = open(fr'{self.output_path}\Input.txt', 'w')
+            for position in self.__positions_list:
+                if position.signals_list.contains_signals_for_input():
+                    position.input_write_to_txt(txt)
+            txt.close()
+            return True
+
+    # ALARMING
+    def establishing_alarming_txt(self):
+        if self.ready_for_alarming():
+            txt = open(fr'{self.output_path}\Alarming.txt', 'w')
+            for position in self.__positions_list:
+                if position.signals_list.contains_signals_for_alarming():
+                    position.alarming_write_to_txt(txt)
+            txt.close()
+            return True
+
+    # COUNTING
+    def establishing_counting_txt(self):
+        if self.ready_for_counting():
+            txt = open(fr'{self.output_path}\Counting.txt', 'w')
+            for position in self.__positions_list:
+                if position.signals_list.contains_signals_for_counting():
+                    position.counting_write_to_txt(txt)
+            txt.close()
+            return True
+
+    # MOPS_MUPS
+    def contains_devtype_in_devices_list(self, devtype):
+        return(
+            any(device.devtype == devtype for device in self.__devices_list)
+        )
+
+    def establishing_mops_mups_txt(self):
+        if self.ready_for_mops_mups():
+            txt = open(fr'{self.output_path}\MOPS_MUPS.txt', 'w')
+
+            # $$$$$$$$$$$$$$$$$$$ ВЫЗОВ БЛОКОВ $$$$$$$$$$$$$$$$$$
+            txt.write('// Вызов блоков\n')
+            for device in self.__devices_list:
+                txt.write(device.call_for_mops_mups_text())
+
+            # $$$$$$$$$$$$ ПЕРЕКЛАДЫВАНИЕ МОПС/МУПС $$$$$$$$$$$$$
+            txt.write(
+                '\n(* Ниже принимаем данные с канала modbus RTU *)\n'
+                '(* Перекладываем входные данные с МОПС/МУПС на'
+                ' входы ФБ для\nдиагностики связи и привязки'
+                ' к конкретному устройству *)\n'
+                '// Перекладываем данные из каналов IO'
+                ' Tecon во входные переменные ФБ Mups 3/Mops 3\n\n'
+            )
+            # МОПСЫ
+            for device in self.__devices_list:
+                if device.mops_shifting_text() is not None:
+                    txt.write(device.mops_shifting_text())
+            # МУПСЫ
+            for device in self.__devices_list:
+                if device.mups_shifting_text() is not None:
+                    txt.write(device.mups_shifting_text())
+
+            # $$$$$$$$$$$$$$$$$$$$$$ IVXX $$$$$$$$$$$$$$$$$$$$$$$
+            txt.write(
+                '//Перекладываем данные с выходов ФБ МОПС/'
+                'МУПС во входные переменные ФБ извещателя\n\n'
+            )
+            # МОПСЫ
+            for device in self.__devices_list:
+                if device.mops_ivxx_text() is not None:
+                    txt.write(device.mops_ivxx_text())
+            # МУПСЫ
+            for device in self.__devices_list:
+                if device.mups_ivxx_text() is not None:
+                    txt.write(device.mups_ivxx_text())
+
+            # $$$$$$$$$$$$$$$$$$$$$$ IDVX $$$$$$$$$$$$$$$$$$$$$$$
+            txt.write(
+                '// Формируем сигнал Недостоверность шле'
+                'йфа по исчезновению связи с МОПС/МУПС\n\n'
+            )
+            # МОПСЫ
+            for device in self.__devices_list:
+                if device.mops_idvx_text() is not None:
+                    txt.write(device.mops_idvx_text())
+            # МУПСЫ
+            for device in self.__devices_list:
+                if device.mups_idvx_text() is not None:
+                    txt.write(device.mups_idvx_text())
+
+            # $$$$$$$$$$$$$$$$$$ СБРОС МОПСОВ $$$$$$$$$$$$$$$$$$$
+            txt.write('// Сброс мопсов\n')
+            for device in self.__devices_list:
+                if device.mops_reset_text() is not None:
+                    txt.write(device.mops_reset_text())
+
+            #  МОПСЫ 3а
+            if self.contains_devtype_in_devices_list('MOPS3a'):
+                for device in self.__devices_list:
+                    if device.mops3a_m_text() is not None:
+                        txt.write(device.mops3a_m_text())
+                    if device.mops3a_s_text() is not None:
+                        txt.write(device.mops3a_s_text())
+
+                txt.write('// Тест и сброс извещателей\n')
+                for device in self.__devices_list:
+                    if device.mops3a_test_reset_text() is not None:
+                        txt.write(device.mops3a_test_reset_text())
+
+                txt.write(
+                    '// Перекладываем данные с выходов МОПС3А'
+                    ' в входные переменные ФБ извещателя\n\n'
+                )
+                for device in self.__devices_list:
+                    if device.mops3a_m_ivxx_xvlx_text() is not None:
+                        txt.write(device.mops3a_m_ivxx_xvlx_text())
+                    if device.mops3a_s_idvx_dvxx_text() is not None:
+                        txt.write(device.mops3a_s_ivxx_xvlx_text())
+
+                txt.write(
+                    '//Формируем сигнал Недостоверность шлейфа '
+                    'по исчезновению связи с МОПС3А\n\n'
+                )
+                for device in self.__devices_list:
+                    if device.mops3a_m_idvx_dvxx_text() is not None:
+                        txt.write(device.mops3a_m_idvx_dvxx_text())
+                    if device.mops3a_s_idvx_dvxx_text() is not None:
+                        txt.write(device.mops3a_s_idvx_dvxx_text())
+                txt.close()
+                self.__mops_mups_was_formed = True
+            return True
+
+    # Reset_MOPS3a
+    def establishing_reset_mops3a_txt(self):
+        if (
+            self.ready_for_mops_mups()
+            and
+            self.contains_devtype_in_devices_list('MOPS3a')
+        ):
+            txt = open(fr'{self.output_path}\Reset_MOPS.txt', 'w')
+            txt.write(
+                '// Сброс\n'
+                f'{self.reset_position}COOF(.COOF, .CSOF, .CPOF, .CWOF);\n'
+                f'{self.reset_position}CORS(.CORS, .CSRS, .CPRS, .CWRS);\n\n'
+                '// Сброс МОПС3А\n'
+                f'IF {self.reset_position}CORS.XORS THEN\n'
+            )
+            for device in self.__devices_list:
+                if device.devtype == 'MOPS3a':
+                    txt.write(
+                        f'_IO_QX{device.input_index}_1_8.ValueDINT:=1;\n'
+                    )
+            txt.write('ELSE\n')
+            for device in self.__devices_list:
+                if device.devtype == 'MOPS3a':
+                    txt.write(
+                        f'_IO_QX{device.input_index}_1_8.ValueDINT:=0;\n'
+                    )
+            txt.write(
+                'END_IF;\n\n'
+            )
+            txt.close()
+            return True
+
+    # OXON
+    def establishing_oxon_txt(self):
+        if self.ready_for_mops_mups():
+            txt = open(fr'{self.output_path}\Oxon.txt', 'w')
+            for device in self.__devices_list:
+                if device.mups_oxon_text() is not None:
+                    txt.write(device.mups_oxon_text())
+            txt.close()
+            return True
+
+    # DIAG_ST
+    def establishing_diag_st_txt(self):
+        if self.ready_for_diag_st():
+            txt = open(fr'{self.output_path}\Diag_ST.txt', 'w')
+            import re
+
+            def select_by_type_and_sort_by_address(types_lst, sgnls_lst):
+                lst = \
+                    list(filter(lambda sgnl:
+                                sgnl.sigtype
+                                in
+                                types_lst,
+                                sgnls_lst))
+                lst.sort(
+                    key=lambda sgnl: int(re.findall(r'\d+', sgnl.address)[-1])
+                )
+                return lst
+
+            for position in self.__positions_list:
+                if position.signals_list.contains_signals_for_diag_st():
+                    txt.write(f'// {position.name_for_comment}\n')
+
+                diag_st_di = select_by_type_and_sort_by_address(
+                    config.sigtypes_di_for_diag_st, position.signals_list
+                )
+
+                diag_st_modules = select_by_type_and_sort_by_address(
+                    config.sigtypes_modules_for_types, position.signals_list
+                )
+
+                for signal in diag_st_di:
+                    txt.write(
+                        f'{signal.name}(_IO_{signal.address}, SYS_LNG.XLNG);\n'
+                    )
+
+                if len(diag_st_di) != 0:
+                    txt.write('\n')
+
+                for signal in diag_st_modules:
+                    txt.write(
+                        f'{signal.name}(_IO_{signal.address}.Status);  '
+                        f'// {signal.descript} Status\n'
+                    )
+
+                if len(diag_st_modules) != 0:
+                    txt.write('\n')
+
+            txt.close()
+            return True
+
+    # WEINTEK
+    def establishing_weintek_txt(self):
+        if self.ready_for_weintek():
+            txt = open(fr'{self.output_path}\Weintek.txt', 'w')
+            for position in self.__positions_list:
+                if (
+                        position.izv_addr is not None
+                        and
+                        position.opv_addr is not None
+                        and
+                        len(position.signals_list) != 0
+                ):
+                    txt.write(f'// {position.name_for_comment}\n')
+                    position.weintek_write_to_txt(txt)
+                    txt.write('\n')
+
+            if self.diag_addr != '':
+                txt.write('// Диагностика\n')
+                n = 0
+                for sigtype in config.sigtypes_diag_for_weintek:
+                    for signal in self.__signals_list:
+                        if signal.sigtype == sigtype:
+                            if sigtype == 'DIAG_DI':
+                                txt.write(
+                                    '_IO_QX{0}_1_{2}: = {1}.XVLX;\n'
+                                    '_IO_QX{0}_1_{3}: = {1}.DVXX;\n'.format(
+                                        self.coil,
+                                        signal.name,
+                                        int(self.diag_addr)+1+n,
+                                        int(self.diag_addr)+2+n,
+                                    )
+                                )
+                                n += 2
+                            elif sigtype == 'DIAG_Mod':
+                                txt.write(
+                                    '_IO_QX{0}_1_{2}: = {1}.FXXX;\n'.format(
+                                        self.coil,
+                                        signal.name,
+                                        int(self.diag_addr) + 1 + n,
+                                    )
+                                )
+                                n += 1
+                            elif sigtype in ['Mops3', 'Mups3', 'Mops3a']:
+                                txt.write(
+                                    '_IO_QX{0}_1_{2}: = {1}.DVXX;\n'.format(
+                                        self.coil,
+                                        signal.name,
+                                        int(self.diag_addr) + 1 + n,
+                                    )
+                                )
+                                n += 1
+                    txt.write('\n')
+            txt.close()
+            return True
+
+    def __datatable(self, category):
+
+        for position in self.__positions_list:
+            if len(position.upg_counters) != 0:
+                bool_counter = \
+                    f'{position.name}UPG_{config.cntrs_dict["Пожары"]}'
+                position.bool_counters.add(bool_counter)
+            if len(position.xsy_counters) != 0:
+                bool_counter = \
+                    f'{position.name}{config.cntrs_dict["Смежные системы"]}'
+                position.bool_counters.add(bool_counter)
+            for counter in position.counters:
+                for cntr_type in config.cntrs_dict:
+                    cntr_marker = config.cntrs_dict[cntr_type]
+                    if cntr_marker in counter and 'UPG' not in counter:
+                        bool_counter = \
+                            f'{position.name}{cntr_marker}'
+                        position.bool_counters.add(bool_counter)
+                    elif cntr_marker in counter and 'UPG' in counter:
+                        bool_counter = \
+                            f'{position.name}UPG_{cntr_marker}'
+                        position.bool_counters.add(bool_counter)
+
+        cors_coof = ['CORS', 'COOF']
+
+        data_len = 0
+
+        data_len += len(self.__signals_list)
+        data_len += len(self.m_names)
+        data_len += len(cors_coof)*len(self.__positions_list)
+
+        for position in self.__positions_list:
+            data_len += len(position.upg_counters)
+            data_len += len(position.xsy_counters)
+            data_len += len(position.counters)
+            data_len += len(position.bool_counters)
+
+        import pandas as pd
+        data = pd.DataFrame(
+            None,
+            columns=[
+                'Марка',
+                'Наименование',
+                'Описание',
+                'Тип Объекта',
+                'Пер.архив.',
+                'Подпись',
+                'Контроллер',
+                'Ресурс №',
+                'Группа событий',
+                'KKS',
+                'Шаблон',
+                'Классификатор',
+            ],
+            index=range(data_len)
+        )
+
+        for i in range(len(data)):
+            data['Контроллер'][i] = \
+                self.name
+            data['Ресурс №'][i] = \
+                'Resource1'
+
+        filled = 0
+        for i in range(len(self.__signals_list)):
+            signal = self.__signals_list[i]
+            data['Марка'][i] = \
+                signal.name
+            data['Тип Объекта'][i] = \
+                signal.sigtype \
+                if category != 2 \
+                else signal.signal_type_cat2
+            data['Группа событий'][i] = \
+                signal.position.name_for_comment
+            data['KKS'][i] = \
+                signal.name[1:].replace('_', '-') \
+                if signal.name[1] == 'P' \
+                else signal.name.replace('_', '-')
+            data['Шаблон'][i] = \
+                'FB_' + signal.sigtype \
+                if category != 2 \
+                else signal.signal_type_cat2
+            filled += 1
+
+        def cnt(counters, pos):
+            nonlocal filled
+            for j in range(len(counters)):
+                cntr = counters[j]
+                data['Марка'][j+filled] = \
+                    cntr
+                data['Тип Объекта'][j+filled] = \
+                    'DINT'
+                data['Группа событий'][j+filled] = \
+                    pos
+                data['Шаблон'][j+filled] = \
+                    'простой'
+                data['Классификатор'][j+filled] = \
+                    'CNT'
+            filled += len(counters)
+
+        for position in self.__positions_list:
+            cnt(position.counters, position.name_for_comment)
+            cnt(position.upg_counters, position.name_for_comment)
+            cnt(position.xsy_counters, position.name_for_comment)
+
+        for position in self.__positions_list:
+            iteration = 0
+            for bool_counter in position.bool_counters:
+                data['Марка'][iteration + filled] = \
+                    f'{bool_counter}'
+                data['Тип Объекта'][iteration + filled] = \
+                    'BOOL'
+                data['Группа событий'][iteration + filled] = \
+                    position.name_for_comment
+                data['Шаблон'][iteration + filled] = \
+                    'простой'
+                data['Классификатор'][iteration + filled] = \
+                    'CNT'
+                iteration += 1
+            filled += len(position.bool_counters)
+
+        m_names = list(self.m_names)
+        for i in range(len(m_names)):
+            m_name = m_names[i]
+            data['Марка'][i+filled] = \
+                m_name
+            data['Тип Объекта'][i+filled] = \
+                'MOPS3a'
+            data['Группа событий'][i+filled] = \
+                self.reset_position[1:-1].replace('_', '-')
+            data['Шаблон'][i+filled] = \
+                'MOPS3a'
+        filled += len(self.m_names)
+
+        for position in self.__positions_list:
+            iteration = 0
+            for corscoof in cors_coof:
+                data['Марка'][iteration+filled] = \
+                    f'{position.name}{corscoof}'
+                data['Тип Объекта'][iteration + filled] = \
+                    corscoof
+                data['Группа событий'][iteration + filled] = \
+                    position.name_for_comment[2:]
+                data['Шаблон'][iteration + filled] = \
+                    'FB_' + corscoof
+                data['Классификатор'][iteration + filled] = \
+                    corscoof
+                iteration += 1
+            filled += len(cors_coof)
+
+        if category == 2:
+            data.to_excel(
+                fr'{self.output_path}\datatable_cat2.xls',
+                index=False,
+                header=False,
+            )
+        else:
+            data.to_excel(
+                fr'{self.output_path}\datatable.xls',
+                index=False,
+                header=False,
+            )
+
+    def establishing_datatable_to_xlsx(self):
+        if self.ready_for_datatable():
+            if self.cabinet_category == '2':
+                self.__datatable(1)
+                self.__datatable(2)
+            else:
+                self.__datatable(1)

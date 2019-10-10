@@ -84,12 +84,19 @@ cntrs_dict = {}
 
 sigtypes_di_for_weintek = []
 sigtypes_do_for_weintek = []
+
+# ТУТ ПОРЯДОК ТИПОВ ДЛЯ ТИПОВ, НАЗВАНИЯ ТИПОВ МЕНЯТЬ НЕ МЕНЯТЬ, НУЖНЫ ПРАВКИ
+# В КОДЕ
+sigtypes_diag_for_weintek = []
+
 weintek_upg_tails_reg = []
 weintek_upg_tails_coils = []
 
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$ DIAG_ST $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 sigtypes_for_diag_st = []
+sigtypes_di_for_diag_st = []
+sigtypes_modules_for_types = []
 
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$ MOPS_MUPS $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 # на основе /config/config.txt
