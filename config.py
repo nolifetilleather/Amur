@@ -78,7 +78,17 @@ sigtypes_for_repairs_in_counting = []
 sigtypes_for_faults_in_counting = []
 sigtypes_for_falsities_in_counting = []
 
+"""
+Словарь для классификации счетчиков в котором каждый
+ключ - назначение счетчика на русском, каждое значение -
+принятые в проекте отличительные части названий для счетчиков.
+"""
 cntrs_dict = {}
+for key_value_couple in between_two_markers_search(
+    const.cntrs_dict_marker, config_file_read
+):
+    kv = key_value_couple.split(': ')
+    cntrs_dict[kv[0]] = kv[1]
 
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$ WEINTEK $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
@@ -101,8 +111,8 @@ sigtypes_modules_for_types = []
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$ MOPS_MUPS $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 # на основе /config/config.txt
 
-styp_for_m_in_mops3a = 1
-styp_for_s_in_mops3a = 0
+styp_for_m_in_mops3a = [1]
+styp_for_s_in_mops3a = [0]
 
 # без "внешнего" конфигурирования
 """
