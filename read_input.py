@@ -70,9 +70,7 @@ def read():
                 'Проверьте входные данные.\n'
             )
         elif input_frame['Position'][i].replace(' ', '') != '':
-            positions.add(
-                Position.format_position_name(input_frame['Position'][i])
-            )
+            positions.add(input_frame['Position'][i])
 
     # создадим объекты позиций, сохраним ссылки на них
     for position_name in positions:
@@ -165,13 +163,13 @@ def read():
             )
             plc.append_signal(signal)
 
-            # список сигналов заполнен
-            plc.signals_list_filled = True
-            print(
-                f'Cписок сигналов экземпляра '
-                f'контроллера {plc.name} заполнен: '
-                f'{plc.signals_list_filled}'
-            )
+    # список сигналов заполнен
+    plc.signals_list_filled = True
+    print(
+        f'Cписок сигналов экземпляра '
+        f'контроллера {plc.name} заполнен: '
+        f'{plc.signals_list_filled}'
+    )
 
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$$$$$$$$ ЛОКАЦИИ (С&E) $$$$$$$$$$$$$$$$$$$$$$$$
@@ -241,13 +239,13 @@ def read():
                     if input_frame['Voting_Logic'][i] != ''
                     else None,
 
-                    conterminal_systems_cntrs=
-                    input_frame['Conterminal_Systems'][i].split(', ')
+                    conterminal_systems_cntrs=(
+                        input_frame['Conterminal_Systems'][i].split(', '))
                     if input_frame['Conterminal_Systems'][i] != ''
                     else None,
 
-                    fire_fightings_cntrs=
-                    input_frame['Fire_Fightings'][i].split(', ')
+                    fire_fightings_cntrs=(
+                        input_frame['Fire_Fightings'][i].split(', '))
                     if input_frame['Fire_Fightings'][i] != ''
                     else None,
 

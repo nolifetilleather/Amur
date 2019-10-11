@@ -293,13 +293,12 @@ class Position:
             )
 
         self.plc = plc
+        self.name_for_comment = name
         self.name = self.format_position_name(name)
 
         self.izv_addr = izv_addr
         self.opv_addr = opv_addr
         self.tush_addr = tush_addr
-
-        self.name_for_comment = name
 
         self.signals_list = SignalsList()
         self.locations_list = []
@@ -379,11 +378,13 @@ class Position:
         .sigtype которых входят в
         config.sigtypes_for_input_txt.
         """
+        # for signal in self.signals_list:
+        #    print(f'{signal.name} {signal.sigtype}')
         txt.write(f'// {self.name_for_comment}\n')
         for sigtype in config.sigtypes_for_input:
             txt.write(f'// {sigtype}\n')
             for signal in self.signals_list:
-                if signal.sigtype == 'sigtype':
+                if signal.sigtype == sigtype:
                     txt.write(
                         f'{signal.name}(.IVXX, .MBIN, '
                         f'{signal.plc.reset_position}_CORS.XORS, '
@@ -402,7 +403,7 @@ class Position:
         for sigtype in config.sigtypes_for_output:
             txt.write(f'// {sigtype}\n')
             for signal in self.signals_list:
-                if signal.sigtype == 'sigtype':
+                if signal.sigtype == sigtype:
                     txt.write(
                         f'{signal.name}(.IVXX, .MBIN, .CAON, '
                         '.SCMX, .STYP, SYS_LNG.XLNG, .IDVX);\n'
@@ -422,13 +423,16 @@ class Position:
         else:
             warning_part = ''
 
+        txt.write(f'// {self.name_for_comment}\n')
         for sigtype in config.sigtypes_for_alarming:
             txt.write(f'// {sigtype}\n')
             for signal in self.signals_list:
                 if (
-                        signal.sigtype == 'sigtype'
+                        signal.sigtype == sigtype
                         and
                         signal.ff_out is None
+                        and
+                        signal.styp not in config.styp_except_for_alarming
                 ):
                     txt.write(
                         f'{signal.name}.CAON:='
@@ -626,13 +630,13 @@ class Position:
         # ИМИТАЦИИ
         if cntrs_without_ff['Имитации']:
 
-            txt.write('\n// Имитации\n')
+            txt.write('\n// Имитации')
 
             cntr_marker = cntrs_markers['Имитации']
             counter = f'{position}_{cntr_marker}_CNT'
 
             for sigtype in config.sigtypes_for_imitations_in_counting:
-                txt.write(f'// {sigtype}\n')
+                txt.write(f'\n// {sigtype}\n')
                 for signal in self.signals_list:
                     if signal.sigtype == sigtype:
                         txt.write(
@@ -642,18 +646,18 @@ class Position:
                                 cntr_marker,
                             )
                         )
-                txt.write('\n')
+                # txt.write('\n')
 
         # РЕМОНТЫ, ОТКЛЮЧЕНИЯ
         if cntrs_without_ff['Ремонты']:
 
-            txt.write('\n// Ремонты, отключения\n')
+            txt.write('\n// Ремонты, отключения')
 
             cntr_marker = cntrs_markers['Ремонты']
             counter = f'{position}_{cntr_marker}_CNT'
 
             for sigtype in config.sigtypes_for_repairs_in_counting:
-                txt.write(f'// {sigtype}\n')
+                txt.write(f'\n// {sigtype}\n')
                 for signal in self.signals_list:
                     if signal.sigtype == sigtype:
                         txt.write(
@@ -663,19 +667,19 @@ class Position:
                                 cntr_marker,
                             )
                         )
-                txt.write('\n')
+                # txt.write('\n')
 
         # СЧЕТЧИКИ ИП БЕЗ ТУШЕНИЯ
         # НЕИСПРАВНОСТИ (сигналы без тушения)
         if cntrs_without_ff['Неисправности']:
 
-            txt.write('\n// Неисправности (сигналы без тушения)\n')
+            txt.write('\n// Неисправности (сигналы без тушения)')
 
             cntr_marker = cntrs_markers['Неисправности']
             counter = f'{position}_{cntr_marker}_CNT'
 
             for sigtype in config.sigtypes_for_faults_in_counting:
-                txt.write(f'// {sigtype}\n')
+                txt.write(f'\n// {sigtype}\n')
                 for signal in self.signals_list:
                     if (
                             signal.sigtype == sigtype
@@ -695,18 +699,18 @@ class Position:
                                 cntr_marker,
                             )
                         )
-                txt.write('\n')
+                # txt.write('\n')
 
         # НЕДОСТОВЕРНОСТИ (сигналы без тушения)
         if cntrs_without_ff['Недостоверности']:
 
-            txt.write('\n// Недостоверности (сигналы без тушения)\n')
+            txt.write('\n// Недостоверности (сигналы без тушения)')
 
             cntr_marker = cntrs_markers['Недостоверности']
             counter = f'{position}_{cntr_marker}_CNT'
 
             for sigtype in config.sigtypes_for_falsities_in_counting:
-                txt.write(f'// {sigtype}\n')
+                txt.write(f'\n// {sigtype}\n')
                 for signal in self.signals_list:
                     if (
                             signal.sigtype == sigtype
@@ -726,7 +730,7 @@ class Position:
                                 cntr_marker,
                             )
                         )
-                txt.write('\n')
+                # txt.write('\n')
 
         # СМЕЖНЫЕ СИСТЕМЫ
         if len(self.xsy_counters) > 0:
@@ -793,13 +797,12 @@ class Position:
                                     cntr_marker,
                                 )
                             )
-                txt.write('\n')
 
         # СЧЕТЧИКИ ИП С ТУШЕНИЕМ
         # НЕИСПРАВНОСТИ (сигналы с тушением)
         if cntrs_with_ff['Неисправности']:
 
-            txt.write('\n// Неисправности (сигналы с тушением)\n')
+            txt.write('\n// Неисправности (сигналы с тушением)')
 
             iteration = 1
 
@@ -808,7 +811,7 @@ class Position:
                 counter = f'{position}_{cntr_marker}_{upg_marker}_CNT'
 
                 for sigtype in config.sigtypes_for_faults_in_counting:
-                    txt.write(f'// {sigtype}\n')
+                    txt.write(f'\n// {sigtype}\n')
                     for signal in self.signals_list:
                         if (
                                 signal.sigtype == sigtype
@@ -827,7 +830,7 @@ class Position:
                                     cntr_marker,
                                 )
                             )
-                    txt.write('\n')
+                    # txt.write('\n')
                 if iteration != len(self.upg_markers):
                     txt.write('\n')
                 iteration += 1
@@ -835,7 +838,7 @@ class Position:
         # НЕДОСТОВЕРНОСТИ (сигналы с тушением)
         if cntrs_with_ff['Недостоверности']:
 
-            txt.write('\n// Недостоверности (сигналы с тушением)\n')
+            txt.write('\n// Недостоверности (сигналы с тушением)')
 
             iteration = 1
 
@@ -844,7 +847,7 @@ class Position:
                 counter = f'{position}_{cntr_marker}_{upg_marker}_CNT'
 
                 for sigtype in config.sigtypes_for_falsities_in_counting:
-                    txt.write(f'// {sigtype}\n')
+                    txt.write(f'\n// {sigtype}\n')
                     for signal in self.signals_list:
                         if (
                                 signal.sigtype == sigtype
@@ -863,7 +866,7 @@ class Position:
                                     cntr_marker,
                                 )
                             )
-                    txt.write('\n')
+                    # txt.write('\n')
                 if iteration != len(self.upg_markers):
                     txt.write('\n')
                 iteration += 1
@@ -897,7 +900,7 @@ class Position:
                     txt.write('\n')
                 iteration += 1
 
-        # ВНИМАНИЯ (сигналы без тушения)
+        # ВНИМАНИЯ (сигналы c тушением)
         if cntrs_without_ff['Внимания']:
 
             txt.write('\n// Внимания (сигналы с тушением)\n')
@@ -920,7 +923,6 @@ class Position:
                                     cntr_marker,
                                 )
                             )
-                txt.write('\n')
 
         # СЧЕТЧИКИ РЕЖИМА
         if len(self.upg_counters) != 0:
@@ -928,12 +930,11 @@ class Position:
 
                 '\n// Счетчик режима "Идет отсчет до начала тушения"\n'
                 '{0}XRFD_CNT:=Count({0}UPG.XFDN, {0}XRFD_CNT);\n\n'
-                .format(position),
-
+                .format(position)
+                +
                 '// Счетчик режима "Идет тушение"\n'
                 '{0}XRFN_CNT:=Count({0}UPG.OF1N, {0}XRFN_CNT);\n'
-                .format(position),
-
+                .format(position)
             )
 
         # ОБЩИЕ СЧЕТЧИКИ
@@ -960,8 +961,6 @@ class Position:
             '{0}XRPX:={0}XRPX_CNT > 0;\n'
             .format(position)
         )
-
-        txt.write()
 
     def weintek_write_to_txt(self, txt):
 
@@ -1353,11 +1352,11 @@ class Device:
             return (x * 3) % 90 - 2
 
     def __m_name(self, addr, sm):
-        return f'M{self.name[4:]}_{sm}_A{addr}'
+        return f'M{self.name[5:]}_{sm}_A{addr}'
 
     # м-имя для теста/сброса МОПСов 3а
     def __m_name_s_f_s(self, first, second):
-        return f'M{self.name[4:]}_S_{first}_{second}'
+        return f'M{self.name[5:]}_S_{first}_{second}'
 
     def mops3a_m_text(self):
 
@@ -1481,7 +1480,7 @@ class Device:
                 if len(addr) == 1:
                     addr = '0' + addr
 
-                m_name = self.__m_name(addr, 'M')
+                m_name = self.__m_name(addr, 'S')
                 self.plc.m_names.add(m_name)
 
                 three_addr = self.__three_addr(int(addr))
@@ -1606,9 +1605,11 @@ class Device:
                 arg2 = \
                     f'_IO_IX{self.input_index}_0_{78+cnt}.ValueDINT'
                 arg3 = \
-                    f'M{self.name[4:]}_S_A{addr}.RST_CNTo'
+                    f'{self.__m_name(addr, "S")}.RST_CNTo'
+                    # f'M{self.name[5:]}_S_A{addr}.RST_CNTo'
                 arg4 = \
-                    f'M{self.name[4:]}_S_A{addr}.TST_CNTo'
+                    f'{self.__m_name(addr, "S")}.TST_CNTo'
+                    # f'M{self.name[5:]}_S_A{addr}.TST_CNTo'
                 arg5 = \
                     '.FL'
 
@@ -1779,6 +1780,10 @@ class PLC:
         self.output_path = str(input(
             'Введите путь для выходных файлов\n'
         ))
+
+    # def print_signals(self):
+    #    for signal in self.__signals_list:
+    #        print(f'{signal.name} {signal.sigtype}')
 
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$$$$$$$ ЗАПОЛНЕНИЕ СПИСКОВ $$$$$$$$$$$$$$$$$$$$
@@ -2260,6 +2265,7 @@ class PLC:
                 if position.signals_list.contains_signals_for_counting():
                     position.counting_write_to_txt(txt)
             txt.close()
+            self.__counting_was_formed = True
             return True
 
     # MOPS_MUPS
@@ -2361,8 +2367,8 @@ class PLC:
                         txt.write(device.mops3a_m_idvx_dvxx_text())
                     if device.mops3a_s_idvx_dvxx_text() is not None:
                         txt.write(device.mops3a_s_idvx_dvxx_text())
-                txt.close()
-                self.__mops_mups_was_formed = True
+            txt.close()
+            self.__mops_mups_was_formed = True
             return True
 
     # Reset_MOPS3a
@@ -2447,8 +2453,7 @@ class PLC:
 
                 for signal in diag_st_modules:
                     txt.write(
-                        f'{signal.name}(_IO_{signal.address}.Status);  '
-                        f'// {signal.descript} Status\n'
+                        f'{signal.name}(_IO_{signal.address}.Status);\n'
                     )
 
                 if len(diag_st_modules) != 0:

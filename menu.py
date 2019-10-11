@@ -66,13 +66,13 @@ def menu(plc):
                 plc.ready_for_mops_mups()
                 and
                 plc.contains_devtype_in_devices_list('MOPS3a'),
-                plc.establishing_reset_mops3a_txt(),
+                plc.establishing_reset_mops3a_txt,
                 True,
             ],
             [
                 'Сформировать Weintek.txt',
                 plc.ready_for_weintek(),
-                plc.establishing_weintek_txt(),
+                plc.establishing_weintek_txt,
                 True,
             ],
             [
@@ -87,12 +87,12 @@ def menu(plc):
                 None,
                 False,
             ],
-            [
-                'Сформировать таблицу исходных данных',
-                plc.ready_for_datatable(),
-                plc.establishing_datatable_to_xlsx,
-                True,
-            ],
+            # [
+            #    'Сформировать таблицу исходных данных',
+            #    plc.ready_for_datatable(),
+            #    plc.establishing_datatable_to_xlsx,
+            #    True,
+            # ],
             [
                 'Вывести инструкцию на экран',
                 True,

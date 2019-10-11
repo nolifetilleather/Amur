@@ -1,2 +1,4 @@
 # /.idea
 /test_path
+/config
+/__pycache__

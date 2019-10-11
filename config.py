@@ -66,17 +66,57 @@ def between_two_markers_search(marker, strng):
 
 # $$$$$$$$$$$$$$$$$$$$$$$ INPUT, OUTPUT, ALARMING $$$$$$$$$$$$$$$$$$$$$$
 
-sigtypes_for_input = []
-sigtypes_for_output = []
-sigtypes_for_alarming = []
+sigtypes_for_input = ['DI_M', 'DI_NM', 'AI']
+sigtypes_for_output = ['DO_M', 'DO_NM']
+
+sigtypes_for_alarming = ['DO_M']
+styp_except_for_alarming = ['-']
 
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$ COUNTING $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-sigtypes_for_counting = []
-sigtypes_for_imitations_in_counting = []
-sigtypes_for_repairs_in_counting = []
-sigtypes_for_faults_in_counting = []
-sigtypes_for_falsities_in_counting = []
+sigtypes_for_counting = [
+    'DI_M',
+    'DI_NM',
+    'DO_M',
+    'DO_NM',
+    'AI',
+    'MOV',
+    'PMP',
+    'FD',
+]
+sigtypes_for_imitations_in_counting = [
+    'DI_M',
+    'DI_NM',
+    'AI',
+]
+sigtypes_for_repairs_in_counting = [
+    'DI_M',
+    'DI_NM',
+    'DO_M',
+    'DO_NM',
+    'AI',
+    'MOV',
+    'PMP',
+    'FD',
+]
+sigtypes_for_faults_in_counting = [
+    'DI_M',
+    'DO_M',
+    'AI',
+    'MOV',
+    'PMP',
+    'FD',
+]
+sigtypes_for_falsities_in_counting = [
+    'DI_M',
+    'DI_NM',
+    'DO_M',
+    'DO_NM',
+    'AI',
+    'MOV',
+    'PMP',
+    'FD',
+]
 
 """
 Словарь для классификации счетчиков в котором каждый
@@ -92,27 +132,44 @@ for key_value_couple in between_two_markers_search(
 
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$ WEINTEK $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-sigtypes_di_for_weintek = []
-sigtypes_do_for_weintek = []
+sigtypes_di_for_weintek = [
+    'DI_M',
+]
+sigtypes_do_for_weintek = [
+    'DO_M',
+]
 
 # ТУТ ПОРЯДОК ТИПОВ ДЛЯ ТИПОВ, НАЗВАНИЯ ТИПОВ МЕНЯТЬ НЕ МЕНЯТЬ, НУЖНЫ ПРАВКИ
 # В КОДЕ
-sigtypes_diag_for_weintek = []
+sigtypes_diag_for_weintek = [
+    'DIAG_DI',
+    'DIAG_Mod',
+    'Mops3',
+    'Mups3',
+    'Mops3A',
+]
 
-weintek_upg_tails_reg = []
-weintek_upg_tails_coils = []
+weintek_upg_tails_reg = ('Status1', 'Status2', 'XFTD', 'XFT1', 'XFT2')
+weintek_upg_tails_coils = ('Blnk', 'XFDN', 'OF1N', 'OF2N', 'XBON')
 
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$ DIAG_ST $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-sigtypes_for_diag_st = []
-sigtypes_di_for_diag_st = []
-sigtypes_modules_for_types = []
+sigtypes_for_diag_st = [
+    'DIAG_DI',
+    'DIAG_Mod',
+]
+sigtypes_di_for_diag_st = [
+    'DIAG_DI'
+]
+sigtypes_modules_for_types = [
+    'DIAG_Mod'
+]
 
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$ MOPS_MUPS $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 # на основе /config/config.txt
 
-styp_for_m_in_mops3a = [1]
-styp_for_s_in_mops3a = [0]
+styp_for_m_in_mops3a = ['1']
+styp_for_s_in_mops3a = ['0']
 
 # без "внешнего" конфигурирования
 """
