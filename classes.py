@@ -551,25 +551,30 @@ class Position:
         cntrs_markers = config.cntrs_dict
         position = self.name
 
+        signals_for_counting = SignalsList(
+            signal for signal in self.signals_list
+            if signal.location != self.plc.exceptions_location
+        )
+
         # СЛОВАРИ НАЛИЧИЯ СЧЕТЧИКОВ НА ПОЗИЦИИ
 
         # счетчики не инициирующих тушение сигналов
         cntrs_without_ff = {
             'Имитации':
-                self.signals_list
+                signals_for_counting
                 .has_any_signal_with_sigtype_in(
                     config.sigtypes_for_imitations_in_counting
                 ),
             'Ремонты':
-                self.signals_list
+                signals_for_counting
                 .contains_signals_for_counting(),
             'Неисправности':
-                self.signals_list
+                signals_for_counting
                 .has_any_no_ff_or_ffo_signal_with_sigtype_in(
                     config.sigtypes_for_faults_in_counting
                 ),
             'Недостоверности':
-                self.signals_list
+                signals_for_counting
                 .has_any_no_ff_or_ffo_signal_with_sigtype_in(
                     config.sigtypes_for_falsities_in_counting
                 ),
@@ -577,24 +582,24 @@ class Position:
                 self
                 .contains_locations_with_fire(),
             'Внимания':
-                self.signals_list
+                signals_for_counting
                 .contains_no_ff_or_ffo_signals_with_warning()
         }
 
         # счетчики инициирующих тушение сигналов
         cntrs_with_ff = {
             'Неисправности':
-                self.signals_list
+                signals_for_counting
                 .has_any_ff_or_ffo_signal_with_sigtype_in(
                     config.sigtypes_for_faults_in_counting
                 ),
             'Недостоверности':
-                self.signals_list
+                signals_for_counting
                 .has_any_ff_or_ffo_signal_with_sigtype_in(
                     config.sigtypes_for_falsities_in_counting
                 ),
             'Внимания':
-                self.signals_list
+                signals_for_counting
                 .contains_ff_or_ffo_signals_with_warning()
         }
 
@@ -620,6 +625,12 @@ class Position:
                     self.counters.append(counter)
                     txt.write(f'{counter}:=0;\n')
 
+        if len(self.upg_counters) > 0:
+            txt.write(
+                f'{self.name}_XRFD_CNT:=0;\n'
+                f'{self.name}_XRFN_CNT:=0;\n'
+            )
+
         for counter in self.upg_counters:
             txt.write(f'{counter}:=0;\n')
 
@@ -637,7 +648,7 @@ class Position:
 
             for sigtype in config.sigtypes_for_imitations_in_counting:
                 txt.write(f'\n// {sigtype}\n')
-                for signal in self.signals_list:
+                for signal in signals_for_counting:
                     if signal.sigtype == sigtype:
                         txt.write(
                             self.__counter_one_signal_actuation(
@@ -658,7 +669,7 @@ class Position:
 
             for sigtype in config.sigtypes_for_repairs_in_counting:
                 txt.write(f'\n// {sigtype}\n')
-                for signal in self.signals_list:
+                for signal in signals_for_counting:
                     if signal.sigtype == sigtype:
                         txt.write(
                             self.__counter_one_signal_actuation(
@@ -680,7 +691,7 @@ class Position:
 
             for sigtype in config.sigtypes_for_faults_in_counting:
                 txt.write(f'\n// {sigtype}\n')
-                for signal in self.signals_list:
+                for signal in signals_for_counting:
                     if (
                             signal.sigtype == sigtype
                             and
@@ -711,7 +722,7 @@ class Position:
 
             for sigtype in config.sigtypes_for_falsities_in_counting:
                 txt.write(f'\n// {sigtype}\n')
-                for signal in self.signals_list:
+                for signal in signals_for_counting:
                     if (
                             signal.sigtype == sigtype
                             and
@@ -812,7 +823,7 @@ class Position:
 
                 for sigtype in config.sigtypes_for_faults_in_counting:
                     txt.write(f'\n// {sigtype}\n')
-                    for signal in self.signals_list:
+                    for signal in signals_for_counting:
                         if (
                                 signal.sigtype == sigtype
                                 and
@@ -848,7 +859,7 @@ class Position:
 
                 for sigtype in config.sigtypes_for_falsities_in_counting:
                     txt.write(f'\n// {sigtype}\n')
-                    for signal in self.signals_list:
+                    for signal in signals_for_counting:
                         if (
                                 signal.sigtype == sigtype
                                 and
@@ -929,11 +940,11 @@ class Position:
             txt.write(
 
                 '\n// Счетчик режима "Идет отсчет до начала тушения"\n'
-                '{0}XRFD_CNT:=Count({0}UPG.XFDN, {0}XRFD_CNT);\n\n'
+                '{0}_XRFD_CNT:=Count({0}_UPG.XFDN, {0}_XRFD_CNT);\n\n'
                 .format(position)
                 +
                 '// Счетчик режима "Идет тушение"\n'
-                '{0}XRFN_CNT:=Count({0}UPG.OF1N, {0}XRFN_CNT);\n'
+                '{0}_XRFN_CNT:=Count({0}_UPG.OF1N, {0}_XRFN_CNT);\n'
                 .format(position)
             )
 
@@ -942,25 +953,27 @@ class Position:
 
         for upg_marker in self.upg_markers:
             txt.write(
-                '{0}XFRX_CNT:=Plus({0}XFRX_{1}_CNT, {0}XFRX_CNT);\n'
-                '{0}XWRX_CNT:=Plus({0}XWRX_{1}_CNT, {0}XWRX_CNT);\n'
-                '{0}FXXX_CNT:=Plus({0}FXXX_{1}_CNT, {0}FXXX_CNT);\n'
-                '{0}DVXX_CNT:=Plus({0}DVXX_{1}_CNT, {0}DVXX_CNT);\n\n'
-                '{0}UPG_XFRX:={0}XFRX_{1}_CNT > 0;\n'
-                '{0}UPG_XWRX:={0}XWRX_{1}_CNT > 0;\n'
-                '{0}UPG_FXXX:={0}FXXX_{1}_CNT > 0 OR {0}DVXX_{1}_CNT > 0;\n\n'
+                '{0}_XFRX_CNT:=Plus({0}_XFRX_{1}_CNT, {0}_XFRX_CNT);\n'
+                '{0}_XWRX_CNT:=Plus({0}_XWRX_{1}_CNT, {0}_XWRX_CNT);\n'
+                '{0}_FXXX_CNT:=Plus({0}_FXXX_{1}_CNT, {0}_FXXX_CNT);\n'
+                '{0}_DVXX_CNT:=Plus({0}_DVXX_{1}_CNT, {0}_DVXX_CNT);\n\n'
+                '{0}_UPG_XFRX:={0}_XFRX_{1}_CNT > 0;\n'
+                '{0}_UPG_XWRX:={0}_XWRX_{1}_CNT > 0;\n'
+                '{0}_UPG_FXXX:={0}_FXXX_{1}_CNT > 0 OR '
+                '{0}_DVXX_{1}_CNT > 0;\n\n'
                 .format(position, upg_marker)
             )
 
         txt.write(
-            '{0}XFRX:={0}XFRX_CNT > 0;\n'
-            '{0}XWRX:={0}XWRX_CNT > 0;\n'
-            '{0}FXXX:={0}FXXX_CNT > 0;\n'
-            '{0}DVXX:={0}DVXX_CNT > 0;\n'
-            '{0}XCIM:={0}XCIM_CNT > 0;\n'
-            '{0}XRPX:={0}XRPX_CNT > 0;\n'
+            '{0}_XFRX:={0}_XFRX_CNT > 0;\n'
+            '{0}_XWRX:={0}_XWRX_CNT > 0;\n'
+            '{0}_FXXX:={0}_FXXX_CNT > 0;\n'
+            '{0}_DVXX:={0}_DVXX_CNT > 0;\n'
+            '{0}_XCIM:={0}_XCIM_CNT > 0;\n'
+            '{0}_XRPX:={0}_XRPX_CNT > 0;\n'
             .format(position)
         )
+        txt.write('\n')
 
     def weintek_write_to_txt(self, txt):
 
@@ -1606,10 +1619,8 @@ class Device:
                     f'_IO_IX{self.input_index}_0_{78+cnt}.ValueDINT'
                 arg3 = \
                     f'{self.__m_name(addr, "S")}.RST_CNTo'
-                    # f'M{self.name[5:]}_S_A{addr}.RST_CNTo'
                 arg4 = \
                     f'{self.__m_name(addr, "S")}.TST_CNTo'
-                    # f'M{self.name[5:]}_S_A{addr}.TST_CNTo'
                 arg5 = \
                     '.FL'
 
@@ -1756,6 +1767,8 @@ class PLC:
         self.__positions_list = []
         self.__devices_list = []
 
+        self.exceptions_location = None
+
         self.upg_counters = set()
         self.xsy_counters = set()
         self.other_counters = set()
@@ -1874,7 +1887,8 @@ class PLC:
             экземпляра Position на основе заполненного
             signals_list.
             """
-            location.position_check_and_set()
+            if location != self.exceptions_location:
+                location.position_check_and_set()
 
     def __fill_counters(self):
         """

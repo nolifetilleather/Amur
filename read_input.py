@@ -72,6 +72,10 @@ def read():
         elif input_frame['Position'][i].replace(' ', '') != '':
             positions.add(input_frame['Position'][i])
 
+    # отсортируем имена позиций
+    positions = list(positions)
+    positions.sort()
+
     # создадим объекты позиций, сохраним ссылки на них
     for position_name in positions:
         position = Position(
@@ -176,19 +180,37 @@ def read():
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
     """
+    Создадим локацию для сигналов исключений.
+    В ней будем сохранять сигналы, исходя из
+    .sigtype которых их следовало использовать
+    в Сounting, однако их принадлежность к
+    локации exc исключит их из формирования
+    текста Counting.txt
+    """
+    exceptions_location = Location(
+        name='exc'
+        )
+    plc.append_location(exceptions_location)
+    plc.exceptions_location = exceptions_location
+
+    """
     Проверка заполнения информации о C&E в input_frame
     по заполнению столбцов Location и Location_CE.
     Проверка корректности заполнения по равенству множеств
     от значений в столбцах Location и Locations.
     """
-    sets_equal = (
-            set(list(input_frame['Location'])).discard('')
-            == set(list(input_frame['Location_CE'])).discard('')
-    )
+    loc_set = set(list(input_frame['Location']))
+    loc_set.discard('')
+    loc_set.discard('exc')
+
+    loc_ce_set = set(list(input_frame['Location_CE']))
+    loc_ce_set.discard('')
+
+    sets_equal = loc_set == loc_ce_set
     sets_not_empty = (
-            set(list(input_frame['Location_CE'])).discard('') != set()
+            loc_ce_set != set()
             and
-            set(list(input_frame['Location'])).discard('') != set()
+            loc_set != set()
     )
 
     print(
@@ -342,6 +364,7 @@ def read():
             'Список локаций экземпляра контроллера заполнен: '
             f'{plc.ce_locations_filled}'
         )
+
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$$$$$$$$$$$ УСТРОЙСТВА $$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
