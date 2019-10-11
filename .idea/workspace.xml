@@ -2,10 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="b0d58460-8562-4782-ab0b-cb67160fc23b" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/read_input.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/dictionaries/.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/classes.py" beforeDir="false" afterPath="$PROJECT_DIR$/classes.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -18,11 +18,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/classes.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-751">
-              <caret line="2621" column="45" selection-start-line="2621" selection-start-column="45" selection-end-line="2621" selection-end-column="45" />
+            <state relative-caret-position="-69">
+              <caret line="3" column="6" selection-start-line="3" selection-start-column="6" selection-end-line="3" selection-end-column="6" />
             </state>
           </provider>
         </entry>
@@ -30,8 +30,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/config.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-138">
-              <caret line="81" lean-forward="true" selection-start-line="81" selection-end-line="81" />
+            <state relative-caret-position="652">
+              <caret line="81" selection-start-line="81" selection-end-line="81" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -48,11 +48,20 @@
           </provider>
         </entry>
       </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/read_input.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="560">
+              <caret line="346" lean-forward="true" selection-start-line="346" selection-end-line="346" />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/test_path/tets.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="46">
-              <caret line="2" column="8" lean-forward="true" selection-start-line="2" selection-start-column="8" selection-end-line="2" selection-end-column="8" />
+              <caret line="2" column="8" selection-start-line="2" selection-start-column="8" selection-end-line="2" selection-end-column="8" />
             </state>
           </provider>
         </entry>
@@ -73,6 +82,7 @@
       <find>{position}</find>
       <find>signal_type</find>
       <find>return False</find>
+      <find>reset_position</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -85,20 +95,34 @@
         <option value="$PROJECT_DIR$/test_path/tets.py" />
         <option value="$PROJECT_DIR$/config.py" />
         <option value="$PROJECT_DIR$/classes.py" />
+        <option value="$PROJECT_DIR$/read_input.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="591" />
-    <option name="y" value="-20" />
-    <option name="width" value="922" />
-    <option name="height" value="1110" />
+    <option name="x" value="590" />
+    <option name="y" value="-21" />
+    <option name="width" value="923" />
+    <option name="height" value="1111" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
     </navigator>
-    <panes />
+    <panes>
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="Amur" type="b2602c69:ProjectViewProjectNode" />
+              <item name="Amur" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+      <pane id="Scope" />
+    </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
@@ -162,19 +186,20 @@
       <updated>1570514223775</updated>
       <workItem from="1570514228817" duration="26551000" />
       <workItem from="1570598522783" duration="28623000" />
-      <workItem from="1570685594170" duration="26387000" />
+      <workItem from="1570685594170" duration="26947000" />
+      <workItem from="1570769816551" duration="4544000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="81561000" />
+    <option name="totallyTimeSpent" value="86665000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="54" y="-8" width="1556" height="917" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.32938075" weight="0.26403743" />
-      <window_info id="Structure" order="1" sideWeight="0.67061925" side_tool="true" visible="true" weight="0.26737967" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.32674572" weight="0.26737967" />
+      <window_info active="true" id="Structure" order="1" sideWeight="0.6732543" side_tool="true" visible="true" weight="0.26737967" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32806325" />
@@ -243,7 +268,7 @@
     <entry file="file://$PROJECT_DIR$/test_path/tets.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="46">
-          <caret line="2" column="8" lean-forward="true" selection-start-line="2" selection-start-column="8" selection-end-line="2" selection-end-column="8" />
+          <caret line="2" column="8" selection-start-line="2" selection-start-column="8" selection-end-line="2" selection-end-column="8" />
         </state>
       </provider>
     </entry>
@@ -256,8 +281,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/config.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-138">
-          <caret line="81" lean-forward="true" selection-start-line="81" selection-end-line="81" />
+        <state relative-caret-position="652">
+          <caret line="81" selection-start-line="81" selection-end-line="81" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
@@ -266,8 +291,15 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/classes.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-751">
-          <caret line="2621" column="45" selection-start-line="2621" selection-start-column="45" selection-end-line="2621" selection-end-column="45" />
+        <state relative-caret-position="-69">
+          <caret line="3" column="6" selection-start-line="3" selection-start-column="6" selection-end-line="3" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/read_input.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="560">
+          <caret line="346" lean-forward="true" selection-start-line="346" selection-end-line="346" />
         </state>
       </provider>
     </entry>

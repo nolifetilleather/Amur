@@ -293,9 +293,7 @@ class Position:
             )
 
         self.plc = plc
-        self.name = name.replace(' ', '').replace('-', '_')
-        if not self.name[0].isalpha():
-            self.name = 'P' + self.name
+        self.name = self.format_position_name(name)
 
         self.izv_addr = izv_addr
         self.opv_addr = opv_addr
@@ -310,6 +308,13 @@ class Position:
         self.xsy_counters = []
         self.counters = []
         self.bool_counters = set()
+
+    @staticmethod
+    def format_position_name(name):
+        frmt_name = name.replace(' ', '').replace('-', '_')
+        if not frmt_name[0].isalpha():
+            frmt_name = 'P' + frmt_name
+        return frmt_name
 
     def contains_locations_with_warning(self):
         """
@@ -381,7 +386,7 @@ class Position:
                 if signal.sigtype == 'sigtype':
                     txt.write(
                         f'{signal.name}(.IVXX, .MBIN, '
-                        f'{signal.plc.reset_position}CORS.XORS, '
+                        f'{signal.plc.reset_position}_CORS.XORS, '
                         f'.IDVX, .IFXX, SYS_LNG.XLNG, {signal.styp});\n'
                     )
             txt.write('\n')
@@ -1738,7 +1743,8 @@ class PLC:
     ):
         self.name = name
         self.cabinet_category = cabinet_category
-        self.reset_position = reset_position
+        self.reset_position_for_comment = reset_position
+        self.reset_position = Position.format_position_name(reset_position)
 
         self.diag_addr = diag_addr
         self.reg = reg
@@ -2369,10 +2375,10 @@ class PLC:
             txt = open(fr'{self.output_path}\Reset_MOPS.txt', 'w')
             txt.write(
                 '// Сброс\n'
-                f'{self.reset_position}COOF(.COOF, .CSOF, .CPOF, .CWOF);\n'
-                f'{self.reset_position}CORS(.CORS, .CSRS, .CPRS, .CWRS);\n\n'
+                f'{self.reset_position}_COOF(.COOF, .CSOF, .CPOF, .CWOF);\n'
+                f'{self.reset_position}_CORS(.CORS, .CSRS, .CPRS, .CWRS);\n\n'
                 '// Сброс МОПС3А\n'
-                f'IF {self.reset_position}CORS.XORS THEN\n'
+                f'IF {self.reset_position}_CORS.XORS THEN\n'
             )
             for device in self.__devices_list:
                 if device.devtype == 'MOPS3a':
@@ -2635,7 +2641,7 @@ class PLC:
             data['Тип Объекта'][i+filled] = \
                 'MOPS3a'
             data['Группа событий'][i+filled] = \
-                self.reset_position[1:-1].replace('_', '-')
+                self.reset_position_for_comment
             data['Шаблон'][i+filled] = \
                 'MOPS3a'
         filled += len(self.m_names)
@@ -2648,7 +2654,7 @@ class PLC:
                 data['Тип Объекта'][iteration + filled] = \
                     corscoof
                 data['Группа событий'][iteration + filled] = \
-                    position.name_for_comment[2:]
+                    position.name_for_comment
                 data['Шаблон'][iteration + filled] = \
                     'FB_' + corscoof
                 data['Классификатор'][iteration + filled] = \
