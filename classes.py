@@ -222,6 +222,12 @@ class SignalsList(list):
             config.sigtypes_for_diag_st
         )
 
+    def contains_signals_for_weintek_diag(self):
+        return (
+            any(signal.sigtype in config.sigtypes_diag_for_weintek
+                for signal in self)
+        )
+
 
 class Location:
 
@@ -306,6 +312,7 @@ class Position:
         self.upg_markers = []
         self.xsy_counters = []
         self.counters = []
+        self.counters_for_sum = []
         self.bool_counters = set()
 
     @staticmethod
@@ -436,7 +443,7 @@ class Position:
                 ):
                     txt.write(
                         f'{signal.name}.CAON:='
-                        f'{signal.position.name}XFRX_CNT > 0'
+                        f'{signal.position.name}_XFRX_CNT > 0'
                         f'{warning_part};\n'
                     )
             txt.write('\n')
@@ -610,6 +617,7 @@ class Position:
         for cntr in cntrs_without_ff:
             if cntrs_without_ff[cntr]:
                 counter = f'{position}_{cntrs_markers[cntr]}_CNT'
+                self.counters_for_sum.append(counter)
                 self.counters.append(counter)
                 txt.write(f'{counter}:=0;\n')
 
@@ -919,7 +927,6 @@ class Position:
             cntr_marker = cntrs_markers['Внимания']
             for upg_marker in self.upg_markers:
                 counter = f'{position}_{cntr_marker}_{upg_marker}_CNT'
-
                 for location in self.locations_list:
                     if (
                             location.warning_cntr
@@ -936,16 +943,16 @@ class Position:
                             )
 
         # СЧЕТЧИКИ РЕЖИМА
-        if len(self.upg_counters) != 0:
+        for upg_marker in self.upg_markers:
             txt.write(
 
                 '\n// Счетчик режима "Идет отсчет до начала тушения"\n'
-                '{0}_XRFD_CNT:=Count({0}_UPG.XFDN, {0}_XRFD_CNT);\n\n'
-                .format(position)
+                '{0}_XRFD_CNT:=Count({0}_{1}.XFDN, {0}_XRFD_CNT);\n'
+                .format(position, upg_marker)
                 +
                 '// Счетчик режима "Идет тушение"\n'
-                '{0}_XRFN_CNT:=Count({0}_UPG.OF1N, {0}_XRFN_CNT);\n'
-                .format(position)
+                '{0}_XRFN_CNT:=Count({0}_{1}.OF1N, {0}_XRFN_CNT);\n'
+                .format(position, upg_marker)
             )
 
         # ОБЩИЕ СЧЕТЧИКИ
@@ -957,22 +964,20 @@ class Position:
                 '{0}_XWRX_CNT:=Plus({0}_XWRX_{1}_CNT, {0}_XWRX_CNT);\n'
                 '{0}_FXXX_CNT:=Plus({0}_FXXX_{1}_CNT, {0}_FXXX_CNT);\n'
                 '{0}_DVXX_CNT:=Plus({0}_DVXX_{1}_CNT, {0}_DVXX_CNT);\n\n'
-                '{0}_UPG_XFRX:={0}_XFRX_{1}_CNT > 0;\n'
-                '{0}_UPG_XWRX:={0}_XWRX_{1}_CNT > 0;\n'
-                '{0}_UPG_FXXX:={0}_FXXX_{1}_CNT > 0 OR '
+                '{0}_{1}_XFRX:={0}_XFRX_{1}_CNT > 0;\n'
+                '{0}_{1}_XWRX:={0}_XWRX_{1}_CNT > 0;\n'
+                '{0}_{1}_FXXX:={0}_FXXX_{1}_CNT > 0 OR '
                 '{0}_DVXX_{1}_CNT > 0;\n\n'
                 .format(position, upg_marker)
             )
 
-        txt.write(
-            '{0}_XFRX:={0}_XFRX_CNT > 0;\n'
-            '{0}_XWRX:={0}_XWRX_CNT > 0;\n'
-            '{0}_FXXX:={0}_FXXX_CNT > 0;\n'
-            '{0}_DVXX:={0}_DVXX_CNT > 0;\n'
-            '{0}_XCIM:={0}_XCIM_CNT > 0;\n'
-            '{0}_XRPX:={0}_XRPX_CNT > 0;\n'
-            .format(position)
-        )
+        for key in cntrs_markers:
+            if key != 'Смежные системы':
+                txt.write(
+                    f'{position}_{cntrs_markers[key]}:='
+                    f'{position}_{cntrs_markers[key]}_CNT > 0;\n'
+                )
+
         txt.write('\n')
 
     def weintek_write_to_txt(self, txt):
@@ -2189,6 +2194,10 @@ class PLC:
             self.__signals_list.contains_signals_for_counting()
             and
             self.locations_reformed
+            and
+            self.__signals_list.contains_signals_for_weintek_diag()
+            and
+            self.devices_diag_signals_created
         )
 
     def ready_for_alarming(self):
@@ -2232,6 +2241,8 @@ class PLC:
                     for position in self.__positions_list)
                 and
                 self.devices_diag_signals_created
+                and
+                self.__signals_list.contains_signals_for_weintek_diag()
         )
 
     def ready_for_diag_st(self):
@@ -2272,12 +2283,165 @@ class PLC:
             return True
 
     # COUNTING
+    @staticmethod
+    def __counter_one_signal_actuation_inv(
+            signal,
+            counter,
+            cntr_marker,
+    ):
+        if signal.styp != 'inv':
+            return (
+                f'{counter}:=Count({signal.name}.{cntr_marker}, {counter});\n'
+            )
+        elif signal.styp == 'inv':
+            return (
+                f'{counter}:='
+                f'Count((NOT {signal.name}.{cntr_marker}), {counter});\n'
+            )
+
     def establishing_counting_txt(self):
         if self.ready_for_counting():
             txt = open(fr'{self.output_path}\Counting.txt', 'w')
             for position in self.__positions_list:
                 if position.signals_list.contains_signals_for_counting():
                     position.counting_write_to_txt(txt)
+            # Обнуление общих счетчиков
+            cab_faults_cntr = (
+                f'{self.reset_position}_CAB_'
+                f'{config.cntrs_dict["Неисправности"]}_CNT'
+            )
+            cab_falsities_cntr = (
+                f'{self.reset_position}_CAB_'
+                f'{config.cntrs_dict["Недостоверности"]}_CNT'
+            )
+            txt.write(
+                f'{cab_faults_cntr}:=0;\n'
+                f'{cab_falsities_cntr}:=0;\n\n'
+            )
+            for key in config.cntrs_dict:
+                if key != 'Смежные системы':
+                    cntr = (
+                        f'{self.reset_position}_{config.cntrs_dict[key]}_CNT'
+                    )
+                    txt.write(
+                        f'{cntr}:=0;\n'
+                    )
+
+            # Неисправности КСПА
+            txt.write('\n// Неисправности КСПА\n')
+            faults_cntr_marker = config.cntrs_dict["Неисправности"]
+            faults_cab_counter = (
+                f'{self.reset_position}_CAB_{faults_cntr_marker}_CNT'
+            )
+            for sigtype in config.sigtypes_for_kspa_faults_in_counting:
+                txt.write(f'// {sigtype}\n')
+                for signal in self.__signals_list:
+                    if signal.sigtype == sigtype:
+                        txt.write(
+                            self.__counter_one_signal_actuation_inv(
+                                signal,
+                                faults_cab_counter,
+                                faults_cntr_marker,
+                            )
+                        )
+
+            txt.write('\n// Недостоверности КСПА\n')
+            falsities_cntr_marker = config.cntrs_dict["Недостоверности"]
+            falsities_cab_counter = (
+                f'{self.reset_position}_CAB_{falsities_cntr_marker}_CNT'
+            )
+            for sigtype in config.sigtypes_for_kspa_falsities_in_counting:
+                txt.write(f'// {sigtype}\n')
+                for signal in self.__signals_list:
+                    if signal.sigtype == sigtype:
+                        txt.write(
+                            self.__counter_one_signal_actuation_inv(
+                                signal,
+                                falsities_cab_counter,
+                                falsities_cntr_marker,
+                            )
+                        )
+                txt.write('\n')
+
+            # булы
+            txt.write(
+                f'{self.reset_position}_CAB_{faults_cntr_marker}:='
+                f'{self.reset_position}_CAB_{faults_cntr_marker}_CNT > 0;\n'
+                f'{self.reset_position}_CAB_{falsities_cntr_marker}:='
+                f'{self.reset_position}_CAB_{falsities_cntr_marker}_CNT > 0;\n'
+                '\n'
+            )
+
+            def sum_of_cntrs(
+                    reset_position,
+                    cntr_marker,
+                    txt_file,
+                    one_more_cntr='',
+            ):
+                counter = f'{reset_position}_{cntr_marker}_CNT'
+                strng = ''
+                strng += f'{counter}:={counter}'
+                for pos in self.__positions_list:
+                    for counter in pos.counters_for_sum:
+                        if cntr_marker in counter:
+                            strng += f'+{counter}'
+                if one_more_cntr != '':
+                    strng += f'+{one_more_cntr}'
+                strng += ';\n'
+                txt_file.write(f'{strng}')
+
+            # Сложение счетчиков пожаров
+            sum_of_cntrs(
+                self.reset_position,
+                config.cntrs_dict['Пожары'],
+                txt,
+            )
+
+            # Сложение счетчиков неисправностей
+            sum_of_cntrs(
+                self.reset_position,
+                config.cntrs_dict['Неисправности'],
+                txt,
+                cab_faults_cntr,
+            )
+
+            # Сложение счетчиков вниманий
+            sum_of_cntrs(
+                self.reset_position,
+                config.cntrs_dict['Внимания'],
+                txt,
+            )
+
+            # Сложение счетчиков ремонтов
+            sum_of_cntrs(
+                self.reset_position,
+                config.cntrs_dict['Ремонты'],
+                txt,
+            )
+
+            sum_of_cntrs(
+                self.reset_position,
+                config.cntrs_dict['Имитации'],
+                txt,
+            )
+
+            sum_of_cntrs(
+                self.reset_position,
+                config.cntrs_dict['Недостоверности'],
+                txt,
+                cab_falsities_cntr,
+            )
+
+            txt.write('\n')
+
+            for key in config.cntrs_dict:
+                if key != 'Смежные системы':
+                    txt.write(
+                        f'{self.reset_position}_{config.cntrs_dict[key]}:='
+                        f'{self.reset_position}_{config.cntrs_dict[key]}_'
+                        f'CNT > 0;\n'
+                    )
+
             txt.close()
             self.__counting_was_formed = True
             return True

@@ -118,6 +118,18 @@ sigtypes_for_falsities_in_counting = [
     'FD',
 ]
 
+sigtypes_for_kspa_faults_in_counting = [
+    'DIAG_DI',
+    'DIAG_Mod',
+    'Mops3',
+    'Mups3',
+    'Mops3A',
+]
+
+sigtypes_for_kspa_falsities_in_counting = [
+    'DIAG_DI'
+]
+
 """
 Словарь для классификации счетчиков в котором каждый
 ключ - назначение счетчика на русском, каждое значение -

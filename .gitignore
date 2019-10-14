@@ -2,3 +2,8 @@
 /test_path
 /config
 /__pycache__
+/build
+/dist
+/main.spec
+/tiger.ico
+/notes.txt
