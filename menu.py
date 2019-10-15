@@ -82,6 +82,12 @@ def menu(plc):
                 True,
             ],
             [
+                'Сформировать To_SAU.txt',
+                plc.ready_for_to_sau(),
+                plc.establishing_to_sau_txt,
+                True,
+            ],
+            [
                 'Сформировать все доступные для формирования файлы',
                 True,
                 None,

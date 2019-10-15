@@ -168,6 +168,11 @@ sigtypes_xsy_for_weintek = [
 weintek_upg_tails_reg = ('Status1', 'Status2', 'XFTD', 'XFT1', 'XFT2')
 weintek_upg_tails_coils = ('Blnk', 'XFDN', 'OF1N', 'OF2N', 'XBON')
 
+# $$$$$$$$$$$$$$$$$$$$$$$$$$$$$ TO_SAU $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+sigtypes_for_to_sau = [
+    'DO_NM'
+]
+
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$ DIAG_ST $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 sigtypes_for_diag_st = [

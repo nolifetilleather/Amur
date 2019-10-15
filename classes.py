@@ -228,6 +228,12 @@ class SignalsList(list):
                 for signal in self)
         )
 
+    def contains_signals_for_to_sau(self):
+        return (
+            any(signal.sigtype in config.sigtypes_for_to_sau
+                for signal in self)
+        )
+
 
 class Location:
 
@@ -973,6 +979,15 @@ class Position:
                 .format(position, upg_marker)
             )
 
+        for i in range(len(self.xsy_counters)):
+            index = i if len(self.xsy_counters) > 1 else ''
+            txt.write(
+                '{0}_{1}{2}:={0}_{1}_CNT{2} > 0;\n'.format(
+                    self.name,
+                    cntrs_markers['Смежные системы'],
+                    index,
+                )
+            )
         for key in cntrs_markers:
             if key != 'Смежные системы':
                 txt.write(
@@ -1200,6 +1215,21 @@ class Position:
         #     fr'{self.plc.output_path}\weintek_table.xls',
         #     index=False,
         # )
+
+    def to_sau_write_to_txt(self, txt):
+        if self.signals_list.contains_signals_for_to_sau():
+            txt.write(
+                f'// {self.name_for_comment}\n'
+                '// Сигналы в смежные системы\n'
+            )
+            for signal in self.signals_list:
+                for location in self.locations_list:
+                    if signal.styp == location.name:
+                        txt.write(
+                            f'{signal.name}:='
+                            f'{location.conterminal_systems_cntrs[0]} > 0;\n'
+                        )
+            txt.write('\n')
 
 
 class Device:
@@ -2270,6 +2300,9 @@ class PLC:
     def ready_for_diag_st(self):
         return self.__signals_list.contains_signals_for_diag_st()
 
+    def ready_for_to_sau(self):
+        return self.__signals_list.contains_signals_for_to_sau()
+
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$ ФОРМИРОВАНИЕ ТЕКСТОВ ПРОГРАММ $$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -2714,6 +2747,27 @@ class PLC:
                                 )
                                 n += 1
                     txt.write('\n')
+            txt.close()
+            return True
+
+    # TO_SAU
+    def establishing_to_sau_txt(self):
+        if self.ready_for_to_sau():
+
+            txt = open(fr'{self.output_path}\To_SAU.txt', 'w')
+
+            for position in self.__positions_list:
+                position.to_sau_write_to_txt(txt)
+
+            plc_xsy_signals = [
+                signal for signal in self.__signals_list
+                if signal.sigtype in config.sigtypes_xsy_for_weintek
+            ]
+            for signal in plc_xsy_signals:
+                txt.write(
+                    f'_IO_{signal.address}_0.ValueBOOL:=NOT {signal.name};\n'
+                )
+
             txt.close()
             return True
 
