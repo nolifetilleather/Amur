@@ -288,6 +288,7 @@ class Position:
             izv_addr=None,
             opv_addr=None,
             tush_addr=None,
+            xsy_addr = None
     ):
 
         if not isinstance(plc, PLC):
@@ -305,6 +306,7 @@ class Position:
         self.izv_addr = izv_addr
         self.opv_addr = opv_addr
         self.tush_addr = tush_addr
+        self.xsy_addr = xsy_addr
 
         self.signals_list = SignalsList()
         self.locations_list = []
@@ -1124,6 +1126,7 @@ class Position:
                     f'_IO_QX{self.plc.coil}_1_{data["Address 2"][i]}:=' \
                     f'{data["Name"][i]}.Blnk_Fr;'
 
+        # ИЗВЕЩАТЕЛИ
         if '// Извещатели' in list(data['Equipment type']):
             txt.write('// Извещатели\n')
             for i in range(len(data)):
@@ -1139,6 +1142,7 @@ class Position:
                         f'{data["XCIM"][i]}\n\n'
                     )
 
+        # ОПОВЕЩАТЕЛИ
         if '// Оповещатели' in list(data['Equipment type']):
             txt.write('// Оповещатели\n')
             for i in range(len(data)):
@@ -1152,6 +1156,7 @@ class Position:
                         f'{data["XRPX"][i]}\n\n'
                     )
 
+        # ТУШЕНИЕ
         if self.tush_addr is not None:
             txt.write('// Тушение\n')
             txt.write(f'(* {self.name_for_comment} *)\n')
@@ -1162,25 +1167,39 @@ class Position:
             for i in range(len(config.weintek_upg_tails_reg)):
                 tail = config.weintek_upg_tails_reg[i]
                 txt.write(
-                    f'_IO_QX{self.plc.reg}_1_{int(self.tush_addr)+2+i}:='
+                    f'_IO_QX{self.plc.reg}_1_{int(self.tush_addr)+1+i}:='
                     f'{self.name}_UPG.{tail};\n'
                 )
             for i in range(len(config.weintek_upg_tails_coils)):
                 tail = config.weintek_upg_tails_coils[i]
                 txt.write(
-                    f'_IO_QX{self.plc.coil}_1_{int(self.tush_addr)+2+i}:='
+                    f'_IO_QX{self.plc.coil}_1_{int(self.tush_addr)+i}:='
                     f'{self.name}_UPG.{tail};\n'
                 )
             txt.write(
-                f'_IO_QX{self.plc.coil}_1_{int(self.tush_addr)+7}:='
+                f'_IO_QX{self.plc.coil}_1_{int(self.tush_addr)+5}:='
                 f'{self.name}_UPG.XCPX AND '
                 f'{self.name}_UPG.XDOF;\n'
             )
 
-        data.to_excel(
-            fr'{self.plc.output_path}\weintek_table.xls',
-            index=False,
-        )
+        # ПЕРЕДАЧА XSY
+        if self.xsy_addr is not None:
+            txt.write('// Передача XSY\n')
+            txt.write(f'(* {self.name_for_comment} *)\n')
+            i = 0
+            for signal in self.signals_list:
+                for location in self.locations_list:
+                    if signal.styp == location.name:
+                        txt.write(
+                            f'_IO_QX{self.plc.reg}_1_{int(self.xsy_addr)+i}:='
+                            f'{signal.name}.OXON;\n'
+                        )
+                        i += 1
+
+        # data.to_excel(
+        #     fr'{self.plc.output_path}\weintek_table.xls',
+        #     index=False,
+        # )
 
 
 class Device:
@@ -1771,6 +1790,7 @@ class PLC:
         self.__locations_list = []
         self.__positions_list = []
         self.__devices_list = []
+        self.diag_position = Position(name='Diag_Position', plc=self)
 
         self.exceptions_location = None
 
@@ -1850,6 +1870,9 @@ class PLC:
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$ ОПЕРАЦИИ НАД ОБЪЕКТАМИ В СПИСКАХ $$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+    def sort_signals_by_them_names(self):
+        self.__signals_list.sort(key=lambda signal: signal.name)
 
     def __fill_positions_signals_lists(self):
         """
@@ -2126,7 +2149,6 @@ class PLC:
 
     def __create_devices_diag_signals(self):
 
-        diag_device_position = Position(name='Diag_Devices_Position', plc=self)
         d = {
             'MOPS3a': 'Mops3A',
             'MOPS': 'Mops3',
@@ -2137,7 +2159,7 @@ class PLC:
                 name=device.name,
                 plc=self,
                 sigtype=d[device.devtype],
-                position=diag_device_position,
+                position=self.diag_position,
             )
             self.append_signal(signal)
 

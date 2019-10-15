@@ -161,6 +161,10 @@ sigtypes_diag_for_weintek = [
     'Mops3A',
 ]
 
+sigtypes_xsy_for_weintek = [
+    'DO_NM'
+]
+
 weintek_upg_tails_reg = ('Status1', 'Status2', 'XFTD', 'XFT1', 'XFT2')
 weintek_upg_tails_coils = ('Blnk', 'XFDN', 'OF1N', 'OF2N', 'XBON')
 

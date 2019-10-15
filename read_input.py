@@ -62,6 +62,8 @@ def read():
             input_frame['Position'][i].replace(' ', '') == ''
             and
             input_frame['Signal'][i].replace(' ', '') != ''
+            and
+            input_frame['Sigtype'][i] not in config.sigtypes_diag_for_weintek
         ):
             # ошибка при отсутствии заполнения позиции для сигнала
             raise ValueError(
@@ -110,10 +112,13 @@ def read():
                 position.opv_addr = input_frame['OPV_addr'][i]
                 position.tush_addr = (
                     input_frame['TUSH_addr'][i]
-                    if
-                    input_frame['TUSH_addr'][i] != ''
-                    else
-                    None
+                    if input_frame['TUSH_addr'][i] != ''
+                    else None
+                )
+                position.xsy_addr = (
+                    input_frame['XSY_addr'][i]
+                    if input_frame['XSY_addr'][i] != ''
+                    else None
                 )
         plc.append_position(position)
 
@@ -146,7 +151,11 @@ def read():
                 # относится сигнал
                 position=Position.format_position_name(
                     (input_frame['Position'][i])
-                ),
+                )
+                if input_frame['Sigtype'][i]
+                not in
+                config.sigtypes_diag_for_weintek
+                else plc.diag_position,
 
                 location=input_frame['Location'][i]
                 if input_frame['Location'][i] != ''
@@ -174,6 +183,8 @@ def read():
         f'контроллера {plc.name} заполнен: '
         f'{plc.signals_list_filled}'
     )
+    # отсортируем список сигналов
+    plc.sort_signals_by_them_names()
 
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$$$$$$$$ ЛОКАЦИИ (С&E) $$$$$$$$$$$$$$$$$$$$$$$$

@@ -2,7 +2,8 @@ import tiger
 import read_input as inp
 from menu import menu
 
-line = '\n\n'+'-' * 100
+line = '\n\n' + '-' * 100
+
 while True:
 
     try:
@@ -19,12 +20,14 @@ while True:
             '\n\nНажмите Enter, повторите '
             f'ввод пути до input.xlsx{line}'
         )
+    """
     except Exception as e:
         print(
             'ОШИБКА!\n\n',
             e.__class__,
             e,
-            '\n\nДля продолжения нажмите Enter'
+            '\n\nДля перезапуска нажмите Enter'
             f'{line}'
         )
+    """
     input()
