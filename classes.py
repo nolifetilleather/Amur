@@ -1957,8 +1957,20 @@ class PLC:
     # $$$$$$$$$$$$ ОПЕРАЦИИ НАД ОБЪЕКТАМИ В СПИСКАХ $$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-    def sort_signals_by_them_names(self):
-        self.__signals_list.sort(key=lambda signal: signal.name)
+    def sort_signals_except_for_diag_signals(self):
+
+        sorted_signals = [
+            signal for signal in self.__signals_list
+            if signal.sigtype not in config.sigtypes_diag_for_weintek
+        ]
+        sorted_signals.sort(key=lambda signal: signal.name)
+
+        not_sorted_signals = [
+            signal for signal in self.__signals_list
+            if signal.sigtype in config.sigtypes_diag_for_weintek
+        ]
+
+        self.__signals_list = SignalsList(sorted_signals + not_sorted_signals)
 
     def __fill_positions_signals_lists(self):
         """
@@ -2490,8 +2502,7 @@ class PLC:
                     one_more_cntr='',
             ):
                 counter = f'{reset_position}_{cntr_marker}_CNT'
-                strng = ''
-                strng += f'{counter}:={counter}'
+                strng = f'{counter}:={counter}'
                 for pos in self.__positions_list:
                     for counter in pos.counters_for_sum:
                         if cntr_marker in counter:
@@ -2708,35 +2719,13 @@ class PLC:
             txt = open(fr'{self.output_path}\Diag_ST.txt', 'w')
             import re
 
-            def select_by_type_and_sort_by_address(types_lst, sgnls_lst):
-                lst = \
-                    list(filter(lambda sgnl:
-                                sgnl.sigtype
-                                in
-                                types_lst,
-                                sgnls_lst))
-                lst.sort(
-                    key=lambda sgnl: int(re.findall(r'\d+', sgnl.address)[-1])
-                )
-                return lst
+            diag_st_di = [signal for signal in self.__signals_list
+                          if signal.sigtype in config.sigtypes_di_for_diag_st]
 
-            """
-            for position in self.__positions_list:
-                if position.signals_list.contains_signals_for_diag_st():
-                    txt.write(f'// {position.name_for_comment}\n')
-            """
-
-            diag_st_di = select_by_type_and_sort_by_address(
-                config.sigtypes_di_for_diag_st,
-                self.__signals_list,
-            )
-            diag_st_di.sort(key=lambda sgnl: sgnl.name)
-
-            diag_st_modules = select_by_type_and_sort_by_address(
-                config.sigtypes_modules_for_types,
-                self.__signals_list,
-            )
-            diag_st_modules.sort(key=lambda sgnl: sgnl.name)
+            diag_st_modules = [
+                signal for signal in self.__signals_list
+                if signal.sigtype in config.sigtypes_modules_for_types
+            ]
 
             for signal in diag_st_di:
                 txt.write(

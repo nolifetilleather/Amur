@@ -192,7 +192,7 @@ def read():
         f'{plc.signals_list_filled}'
     )
     # отсортируем список сигналов
-    plc.sort_signals_by_them_names()
+    plc.sort_signals_except_for_diag_signals()
 
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$$$$$$$$ ЛОКАЦИИ (С&E) $$$$$$$$$$$$$$$$$$$$$$$$
