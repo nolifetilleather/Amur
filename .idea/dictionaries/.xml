@@ -24,9 +24,19 @@
       <w>devtype</w>
       <w>devtypes</w>
       <w>dvxx</w>
+      <w>fcom</w>
+      <w>fdcx</w>
+      <w>fdsx</w>
+      <w>ffof</w>
+      <w>ffon</w>
       <w>fghtngs</w>
       <w>fightings</w>
+      <w>fofx</w>
+      <w>fonx</w>
       <w>frmt</w>
+      <w>frqx</w>
+      <w>fucx</w>
+      <w>fusx</w>
       <w>fxxx</w>
       <w>idvx</w>
       <w>ifxx</w>
@@ -45,12 +55,21 @@
       <w>sgnls</w>
       <w>sigtype</w>
       <w>sigtypes</w>
+      <w>srqm</w>
+      <w>srqx</w>
       <w>sstms</w>
+      <w>stcm</w>
+      <w>stcx</w>
+      <w>stpm</w>
+      <w>stpr</w>
       <w>strng</w>
+      <w>stsm</w>
+      <w>stsx</w>
       <w>styp</w>
       <w>stype</w>
       <w>styps</w>
       <w>tecon</w>
+      <w>tekon</w>
       <w>weintek</w>
       <w>xbon</w>
       <w>xcim</w>
@@ -61,9 +80,13 @@
       <w>xftd</w>
       <w>xlng</w>
       <w>xlsx</w>
+      <w>xmmx</w>
       <w>xors</w>
+      <w>xrcx</w>
       <w>xrfd</w>
       <w>xrfn</w>
+      <w>xrof</w>
+      <w>xron</w>
       <w>xrpx</w>
       <w>xrst</w>
       <w>xtst</w>

@@ -294,7 +294,8 @@ class Position:
             izv_addr=None,
             opv_addr=None,
             tush_addr=None,
-            xsy_addr = None
+            xsy_addr=None,
+            mov_addr=None,
     ):
 
         if not isinstance(plc, PLC):
@@ -313,6 +314,7 @@ class Position:
         self.opv_addr = opv_addr
         self.tush_addr = tush_addr
         self.xsy_addr = xsy_addr
+        self.mov_addr = mov_addr
 
         self.signals_list = SignalsList()
         self.locations_list = []
@@ -1194,11 +1196,63 @@ class Position:
             txt.write(
                 f'_IO_QX{self.plc.coil}_1_{int(self.tush_addr)+5}:='
                 f'{self.name}_UPG.XCPX AND '
-                f'{self.name}_UPG.XDOF;\n'
+                f'{self.name}_UPG.XDOF;\n\n'
             )
 
+        # ЗАДВИЖКИ
+        if (
+                self.mov_addr is not None
+                and
+                any(signal.sigtype in config.sigtypes_valves_for_weintek
+                    for signal in self.signals_list)
+        ):
+            txt.write('// Задвижки\n')
+            addr = int(self.mov_addr)
+            for signal in self.signals_list:
+                if signal.sigtype in config.sigtypes_valves_for_weintek:
+                    txt.write(f'(* {signal.name} *)\n')
+                    for el in config.weintek_valves_tails_with_comments[0:5]:
+                        txt.write(
+                            '{0}{1}:=_IO_IX{2}_0_{3}; {4}\n'.format(
+                                signal.name,
+                                el[0],
+                                self.plc.reg,
+                                addr,
+                                el[1],
+                            )
+                        )
+                        addr += 1
+                    for el in config.weintek_valves_tails_with_comments[5:13]:
+                        txt.write(
+                            '_IO_QX{0}_1_{1}:={2}{3}; {4}\n'.format(
+                                self.plc.reg,
+                                addr,
+                                signal.name,
+                                el[0],
+                                el[1],
+                            )
+                        )
+                        addr += 1
+                    for el in config.weintek_valves_tails_with_comments[13:]:
+                        txt.write(
+                            '_IO_QX{0}_1_{1}:={2}{3}; {4}\n'.format(
+                                self.plc.coil,
+                                addr,
+                                signal.name,
+                                el[0],
+                                el[1],
+                            )
+                        )
+                        addr += 1
+                    txt.write('\n')
+
         # ПЕРЕДАЧА XSY
-        if self.xsy_addr is not None:
+        if (
+                self.xsy_addr is not None
+                and
+                any(signal.sigtype in config.sigtypes_xsy_for_weintek
+                    for signal in self.signals_list)
+        ):
             txt.write('// Передача XSY\n')
             txt.write(f'(* {self.name_for_comment} *)\n')
             i = 0
@@ -1206,10 +1260,12 @@ class Position:
                 for location in self.locations_list:
                     if signal.styp == location.name:
                         txt.write(
-                            f'_IO_QX{self.plc.reg}_1_{int(self.xsy_addr)+i}:='
+                            f'_IO_QX{self.plc.reg}_1_'
+                            f'{int(self.xsy_addr) + i}:='
                             f'{signal.name}.OXON;\n'
                         )
                         i += 1
+            txt.write('\n')
 
         # data.to_excel(
         #     fr'{self.plc.output_path}\weintek_table.xls',
@@ -2664,33 +2720,39 @@ class PLC:
                 )
                 return lst
 
+            """
             for position in self.__positions_list:
                 if position.signals_list.contains_signals_for_diag_st():
                     txt.write(f'// {position.name_for_comment}\n')
+            """
 
-                diag_st_di = select_by_type_and_sort_by_address(
-                    config.sigtypes_di_for_diag_st, position.signals_list
+            diag_st_di = select_by_type_and_sort_by_address(
+                config.sigtypes_di_for_diag_st,
+                self.__signals_list,
+            )
+            diag_st_di.sort(key=lambda sgnl: sgnl.name)
+
+            diag_st_modules = select_by_type_and_sort_by_address(
+                config.sigtypes_modules_for_types,
+                self.__signals_list,
+            )
+            diag_st_modules.sort(key=lambda sgnl: sgnl.name)
+
+            for signal in diag_st_di:
+                txt.write(
+                    f'{signal.name}(_IO_{signal.address}, SYS_LNG.XLNG);\n'
                 )
 
-                diag_st_modules = select_by_type_and_sort_by_address(
-                    config.sigtypes_modules_for_types, position.signals_list
+            if len(diag_st_di) != 0:
+                txt.write('\n')
+
+            for signal in diag_st_modules:
+                txt.write(
+                    f'{signal.name}(_IO_{signal.address}.Status);\n'
                 )
 
-                for signal in diag_st_di:
-                    txt.write(
-                        f'{signal.name}(_IO_{signal.address}, SYS_LNG.XLNG);\n'
-                    )
-
-                if len(diag_st_di) != 0:
-                    txt.write('\n')
-
-                for signal in diag_st_modules:
-                    txt.write(
-                        f'{signal.name}(_IO_{signal.address}.Status);\n'
-                    )
-
-                if len(diag_st_modules) != 0:
-                    txt.write('\n')
+            if len(diag_st_modules) != 0:
+                txt.write('\n')
 
             txt.close()
             return True
@@ -2709,7 +2771,6 @@ class PLC:
                 ):
                     txt.write(f'// {position.name_for_comment}\n')
                     position.weintek_write_to_txt(txt)
-                    txt.write('\n')
 
             if self.diag_addr != '':
                 txt.write('// Диагностика\n')

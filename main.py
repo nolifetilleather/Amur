@@ -10,7 +10,6 @@ while True:
 
         plc = inp.read()
         plc.input_data_reformation()
-        # plc.print_signals()
         menu(plc)
 
     except FileNotFoundError as e:

@@ -80,10 +80,12 @@ def read():
 
     # создадим объекты позиций, сохраним ссылки на них
     for position_name in positions:
+
         position = Position(
                 plc=plc,
                 name=position_name,
         )
+
         for i in range(len(input_frame)):
             string_number = i+2
             if (
@@ -120,6 +122,12 @@ def read():
                     if input_frame['XSY_addr'][i] != ''
                     else None
                 )
+                position.mov_addr = (
+                    input_frame['MOV_addr'][i]
+                    if input_frame['MOV_addr'][i] != ''
+                    else None
+                )
+
         plc.append_position(position)
 
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
