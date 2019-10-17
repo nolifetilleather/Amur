@@ -66,7 +66,11 @@ def between_two_markers_search(marker, strng):
 
 # $$$$$$$$$$$$$$$$$$$$$$$ INPUT, OUTPUT, ALARMING $$$$$$$$$$$$$$$$$$$$$$
 
-sigtypes_for_input = ['DI_M', 'DI_NM', 'AI']
+sigtypes_discrete_for_input = ['DI_M', 'DI_NM']
+sigtypes_analog_for_input = ['AI']
+sigtypes_for_input = sigtypes_discrete_for_input + sigtypes_analog_for_input
+styp_res_ai_for_input = ['res']
+
 sigtypes_for_output = ['DO_M', 'DO_NM']
 
 sigtypes_for_alarming = ['DO_M']

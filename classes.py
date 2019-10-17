@@ -398,7 +398,8 @@ class Position:
         # for signal in self.signals_list:
         #    print(f'{signal.name} {signal.sigtype}')
         txt.write(f'// {self.name_for_comment}\n')
-        for sigtype in config.sigtypes_for_input:
+        # дискреты
+        for sigtype in config.sigtypes_discrete_for_input:
             txt.write(f'// {sigtype}\n')
             for signal in self.signals_list:
                 if signal.sigtype == sigtype:
@@ -408,6 +409,59 @@ class Position:
                         f'.IDVX, .IFXX, SYS_LNG.XLNG, {signal.styp});\n'
                     )
             txt.write('\n')
+
+        # аналоги
+        def sgnl_end(sgnl):
+            from re import findall
+            num = findall(r'\d+', sgnl.name)[-1]
+            let = findall(r'\D+', sgnl.name)[-1]
+            result = let + num
+            return result
+
+        def ai_write_to_txt(sgnl, file):
+            dct = {
+                True: 'TRUE',
+                False: 'FALSE',
+            }
+            file.write(
+                f'{sgnl_end(sgnl)}'
+                f'(.IN1, .IN2, 1, {dct[sgnl.styp == "res"]});\n'
+                +
+                '{0}({1}.XAXX, {1}.XVLX1, {1}.XVLX2, '
+                '.MBIN, SYS_LNG.XLNG, {2});\n'.format(
+                    sgnl.name,
+                    sgnl_end(sgnl),
+                    dct[sgnl.styp == "res"],
+                )
+            )
+
+        for sigtype in config.sigtypes_analog_for_input:
+            txt.write(f'// {sigtype}\n')
+            ai_with_res = [
+                signal for signal in self.signals_list
+                if (
+                        signal.sigtype in config.sigtypes_analog_for_input
+                        and
+                        signal.styp in config.styp_res_ai_for_input
+                )
+            ]
+            ai_without_res = [
+                signal for signal in self.signals_list
+                if (
+                        signal.sigtype in config.sigtypes_analog_for_input
+                        and
+                        signal.styp not in config.styp_res_ai_for_input
+                )
+            ]
+            if len(ai_with_res) > 0:
+                txt.write('// Нерезервированные\n')
+                for signal in ai_with_res:
+                    ai_write_to_txt(signal, txt)
+                txt.write('\n')
+            if len(ai_without_res) > 0:
+                txt.write('// Резервированные\n')
+                for signal in ai_without_res:
+                    ai_write_to_txt(signal, txt)
 
     def output_write_to_txt(self, txt):
         """
@@ -660,7 +714,6 @@ class Position:
         if cntrs_without_ff['Имитации']:
 
             txt.write('\n// Имитации')
-
             cntr_marker = cntrs_markers['Имитации']
             counter = f'{position}_{cntr_marker}_CNT'
 
@@ -681,7 +734,6 @@ class Position:
         if cntrs_without_ff['Ремонты']:
 
             txt.write('\n// Ремонты, отключения')
-
             cntr_marker = cntrs_markers['Ремонты']
             counter = f'{position}_{cntr_marker}_CNT'
 
@@ -703,7 +755,6 @@ class Position:
         if cntrs_without_ff['Неисправности']:
 
             txt.write('\n// Неисправности (сигналы без тушения)')
-
             cntr_marker = cntrs_markers['Неисправности']
             counter = f'{position}_{cntr_marker}_CNT'
 
@@ -734,7 +785,6 @@ class Position:
         if cntrs_without_ff['Недостоверности']:
 
             txt.write('\n// Недостоверности (сигналы без тушения)')
-
             cntr_marker = cntrs_markers['Недостоверности']
             counter = f'{position}_{cntr_marker}_CNT'
 
@@ -761,27 +811,65 @@ class Position:
                         )
                 # txt.write('\n')
 
+        def write_indent(pos, location, locs_lst, file):
+            def condition(loc):
+                if (
+                        int(loc.voting_logic[0]) == 2
+                        and
+                        int(loc.voting_logic[1]) > 2
+                ):
+                    return True
+
+            if condition(location):
+                ind = 0
+                for j in range(len(locs_lst)):
+                    if location == locs_lst[j]:
+                        ind += j
+                        break
+                if (
+                        pos == 'prev'
+                        and
+                        location != locs_lst[0]
+                        and not condition(locs_lst[ind - 1])
+                ):
+                    file.write('\n')
+                elif (
+                        pos == 'post'
+                        and
+                        location != locs_lst[-1]
+                        # and not condition(locs_lst[ind + 1])
+                ):
+                    file.write('\n')
+
         # СМЕЖНЫЕ СИСТЕМЫ
         if len(self.xsy_counters) > 0:
 
             txt.write('\n// Смежные системы\n')
-
             cntr_marker = cntrs_markers["Пожары"]
 
             iteration = 1
             for counter in self.xsy_counters:
-                for location in self.locations_list:
+
+                selected_locations = [
+                    location for location in self.locations_list
                     if (
                             location.conterminal_systems_cntrs is not None
                             and
                             counter in location.conterminal_systems_cntrs
-                    ):
-                        self.__counter_with_condition_write_to_txt(
-                            txt,
-                            location,
-                            counter,
-                            cntr_marker,
-                        )
+                    )
+                ]
+
+                for location in selected_locations:
+
+                    write_indent('prev', location, selected_locations, txt)
+                    self.__counter_with_condition_write_to_txt(
+                        txt,
+                        location,
+                        counter,
+                        cntr_marker,
+                    )
+                    write_indent('post', location, selected_locations, txt)
+
                 if iteration != len(self.xsy_counters):
                     txt.write('\n')
                 iteration += 1
@@ -790,24 +878,29 @@ class Position:
         if cntrs_without_ff['Пожары']:
 
             txt.write('\n// Пожары (сигналы без тушения)\n')
-
             cntr_marker = cntrs_markers['Пожары']
             counter = f'{position}_{cntr_marker}_CNT'
 
-            for location in self.locations_list:
-                if location.fire_cntr:
-                    self.__counter_with_condition_write_to_txt(
-                            txt,
-                            location,
-                            counter,
-                            cntr_marker,
-                        )
+            selected_locations = [
+                location for location in self.locations_list
+                if location.fire_cntr
+            ]
+
+            for location in selected_locations:
+
+                write_indent('prev', location, selected_locations, txt)
+                self.__counter_with_condition_write_to_txt(
+                        txt,
+                        location,
+                        counter,
+                        cntr_marker,
+                    )
+                write_indent('post', location, selected_locations, txt)
 
         # ВНИМАНИЯ (сигналы без тушения)
         if cntrs_without_ff['Внимания']:
 
             txt.write('\n// Внимания (сигналы без тушения)\n')
-
             cntr_marker = cntrs_markers['Внимания']
             counter = f'{position}_{cntr_marker}_CNT'
 
@@ -832,10 +925,9 @@ class Position:
         if cntrs_with_ff['Неисправности']:
 
             txt.write('\n// Неисправности (сигналы с тушением)')
+            cntr_marker = cntrs_markers['Неисправности']
 
             iteration = 1
-
-            cntr_marker = cntrs_markers['Неисправности']
             for upg_marker in self.upg_markers:
                 counter = f'{position}_{cntr_marker}_{upg_marker}_CNT'
 
@@ -868,10 +960,9 @@ class Position:
         if cntrs_with_ff['Недостоверности']:
 
             txt.write('\n// Недостоверности (сигналы с тушением)')
+            cntr_marker = cntrs_markers['Недостоверности']
 
             iteration = 1
-
-            cntr_marker = cntrs_markers['Недостоверности']
             for upg_marker in self.upg_markers:
                 counter = f'{position}_{cntr_marker}_{upg_marker}_CNT'
 
@@ -907,34 +998,41 @@ class Position:
         ):
 
             txt.write('\n// Пожаротушения (пожары с тушением)\n')
+            cntr_marker = cntrs_markers['Пожары']
 
             iteration = 1
-
-            cntr_marker = cntrs_markers['Пожары']
             for counter in self.upg_counters:
 
-                for location in self.locations_list:
+                selected_locations = [
+                    location for location in self.locations_list
                     if (
                             location.fire_fightings_cntrs is not None
                             and
                             counter in location.fire_fightings_cntrs
-                    ):
-                        self.__counter_with_condition_write_to_txt(
-                            txt,
-                            location,
-                            counter,
-                            cntr_marker,
-                        )
+                    )
+                ]
+
+                for location in selected_locations:
+
+                    write_indent('prev', location, selected_locations, txt)
+                    self.__counter_with_condition_write_to_txt(
+                        txt,
+                        location,
+                        counter,
+                        cntr_marker,
+                    )
+                    write_indent('post', location, selected_locations, txt)
+
                 if iteration != len(self.upg_counters):
                     txt.write('\n')
                 iteration += 1
 
         # ВНИМАНИЯ (сигналы c тушением)
-        if cntrs_without_ff['Внимания']:
+        if cntrs_with_ff['Внимания']:
 
             txt.write('\n// Внимания (сигналы с тушением)\n')
-
             cntr_marker = cntrs_markers['Внимания']
+
             for upg_marker in self.upg_markers:
                 counter = f'{position}_{cntr_marker}_{upg_marker}_CNT'
                 for location in self.locations_list:
@@ -957,7 +1055,7 @@ class Position:
             txt.write(
 
                 '\n// Счетчик режима "Идет отсчет до начала тушения"\n'
-                '{0}_XRFD_CNT:=Count({0}_{1}.XFDN, {0}_XRFD_CNT);\n'
+                '{0}_XRFD_CNT:=Count({0}_{1}.XFDN, {0}_XRFD_CNT);\n\n'
                 .format(position, upg_marker)
                 +
                 '// Счетчик режима "Идет тушение"\n'
@@ -982,7 +1080,7 @@ class Position:
             )
 
         for i in range(len(self.xsy_counters)):
-            index = i if len(self.xsy_counters) > 1 else ''
+            index = i+1 if len(self.xsy_counters) > 1 else ''
             txt.write(
                 '{0}_{1}{2}:={0}_{1}_CNT{2} > 0;\n'.format(
                     self.name,
@@ -2791,7 +2889,7 @@ class PLC:
                                     )
                                 )
                                 n += 1
-                            elif sigtype in ['Mops3', 'Mups3', 'Mops3a']:
+                            elif sigtype in ['Mops3', 'Mups3', 'Mops3A']:
                                 txt.write(
                                     '_IO_QX{0}_1_{2}: = {1}.DVXX;\n'.format(
                                         self.coil,
@@ -2819,7 +2917,7 @@ class PLC:
             ]
             for signal in plc_xsy_signals:
                 txt.write(
-                    f'_IO_{signal.address}_0.ValueBOOL'
+                    f'_IO_{signal.address}.ValueBOOL'
                     f':=NOT {signal.name}.OXON;\n'
                 )
 
