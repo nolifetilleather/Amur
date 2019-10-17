@@ -1023,10 +1023,15 @@ class Position:
             index=range(len(self.signals_list))
         )
 
+        signals_list_without_exc = [
+            signal for signal in self.signals_list
+            if signal.location != self.plc.exceptions_location
+        ]
+
         di_iteration = 0
         di_cnt = 0
         for sigtype in config.sigtypes_di_for_weintek:
-            for signal in self.signals_list:
+            for signal in signals_list_without_exc:
                 if signal.sigtype == sigtype:
                     data['Name'][di_iteration] = signal.name
                     data['Tag'][di_iteration] = f'(* {signal.name} *)'
@@ -1071,7 +1076,7 @@ class Position:
         do_iteration = 0
         do_cnt = 0
         for sigtype in config.sigtypes_do_for_weintek:
-            for signal in self.signals_list:
+            for signal in signals_list_without_exc:
                 if signal.sigtype == sigtype:
                     num = do_iteration + di_iteration
                     data['Name'][num] = signal.name
@@ -1204,11 +1209,11 @@ class Position:
                 self.mov_addr is not None
                 and
                 any(signal.sigtype in config.sigtypes_valves_for_weintek
-                    for signal in self.signals_list)
+                    for signal in signals_list_without_exc)
         ):
             txt.write('// Задвижки\n')
             addr = int(self.mov_addr)
-            for signal in self.signals_list:
+            for signal in signals_list_without_exc:
                 if signal.sigtype in config.sigtypes_valves_for_weintek:
                     txt.write(f'(* {signal.name} *)\n')
                     for el in config.weintek_valves_tails_with_comments[0:5]:
@@ -1233,17 +1238,19 @@ class Position:
                             )
                         )
                         addr += 1
+                    first_addr = addr - 13
                     for el in config.weintek_valves_tails_with_comments[13:]:
                         txt.write(
                             '_IO_QX{0}_1_{1}:={2}{3}; {4}\n'.format(
                                 self.plc.coil,
-                                addr,
+                                first_addr,
                                 signal.name,
                                 el[0],
                                 el[1],
                             )
                         )
-                        addr += 1
+                        first_addr += 1
+                    addr += 3
                     txt.write('\n')
 
         # ПЕРЕДАЧА XSY
@@ -1282,7 +1289,7 @@ class Position:
                 for location in self.locations_list:
                     if signal.styp == location.name:
                         txt.write(
-                            f'{signal.name}:='
+                            f'{signal.name}.CAON:='
                             f'{location.conterminal_systems_cntrs[0]} > 0;\n'
                         )
             txt.write('\n')
@@ -1821,7 +1828,7 @@ class Device:
                 'IVXX',
                 'XVLX',
                 config.styp_for_s_in_mops3a,
-                'S'
+                'S',
             )
             return text
 
@@ -1834,7 +1841,7 @@ class Device:
                 'IDVX',
                 'DVXX',
                 config.styp_for_m_in_mops3a,
-                'M'
+                'M',
             )
             return text
 
@@ -2717,7 +2724,6 @@ class PLC:
     def establishing_diag_st_txt(self):
         if self.ready_for_diag_st():
             txt = open(fr'{self.output_path}\Diag_ST.txt', 'w')
-            import re
 
             diag_st_di = [signal for signal in self.__signals_list
                           if signal.sigtype in config.sigtypes_di_for_diag_st]
@@ -2731,7 +2737,6 @@ class PLC:
                 txt.write(
                     f'{signal.name}(_IO_{signal.address}, SYS_LNG.XLNG);\n'
                 )
-
             if len(diag_st_di) != 0:
                 txt.write('\n')
 
@@ -2739,7 +2744,6 @@ class PLC:
                 txt.write(
                     f'{signal.name}(_IO_{signal.address}.Status);\n'
                 )
-
             if len(diag_st_modules) != 0:
                 txt.write('\n')
 
@@ -2815,7 +2819,8 @@ class PLC:
             ]
             for signal in plc_xsy_signals:
                 txt.write(
-                    f'_IO_{signal.address}_0.ValueBOOL:=NOT {signal.name};\n'
+                    f'_IO_{signal.address}_0.ValueBOOL'
+                    f':=NOT {signal.name}.OXON;\n'
                 )
 
             txt.close()

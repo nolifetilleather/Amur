@@ -19,7 +19,6 @@ while True:
             '\n\nНажмите Enter, повторите '
             f'ввод пути до input.xlsx{line}'
         )
-    """
     except Exception as e:
         print(
             'ОШИБКА!\n\n',
@@ -28,5 +27,4 @@ while True:
             '\n\nДля перезапуска нажмите Enter'
             f'{line}'
         )
-    """
     input()
