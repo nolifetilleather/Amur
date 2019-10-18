@@ -413,13 +413,13 @@ class Position:
         # аналоги
         def sgnl_end(sgnl):
             from re import findall, split
-            num = findall(r'\d+', sgnl)[-1]
-            if split(r'\d+', sgnl)[-1].isalpha():
-                let = findall(r'\D+', sgnl)[-2]
-                let2 = findall(r'\D+', sgnl)[-1]
+            num = findall(r'\d+', sgnl.name)[-1]
+            if split(r'\d+', sgnl.name)[-1].isalpha():
+                let = findall(r'\D+', sgnl.name)[-2]
+                let2 = findall(r'\D+', sgnl.name)[-1]
                 result = let + num + let2
             else:
-                let = findall(r'\D+', sgnl)[-1]
+                let = findall(r'\D+', sgnl.name)[-1]
                 result = let + num
             return result
 
@@ -1083,7 +1083,7 @@ class Position:
                 '{0}_DVXX_{1}_CNT > 0;\n\n'
                 .format(position, upg_marker)
             )
-
+        """
         for i in range(len(self.xsy_counters)):
             index = i+1 if len(self.xsy_counters) > 1 else ''
             txt.write(
@@ -1093,6 +1093,7 @@ class Position:
                     index,
                 )
             )
+        """
         for key in cntrs_markers:
             if key != 'Смежные системы':
                 txt.write(
@@ -2561,10 +2562,12 @@ class PLC:
                     )
 
             # Неисправности КСПА
-            txt.write('\n// Неисправности КСПА\n')
+            falsities_cntr_marker = config.cntrs_dict["Недостоверности"]
             faults_cntr_marker = config.cntrs_dict["Неисправности"]
+
+            txt.write('\n// Неисправности КСПА\n')
             faults_cab_counter = (
-                f'{self.reset_position}_CAB_{faults_cntr_marker}_CNT'
+                f'{self.reset_position}_CAB_{falsities_cntr_marker}_CNT'
             )
             for sigtype in config.sigtypes_for_kspa_faults_in_counting:
                 txt.write(f'// {sigtype}\n')
@@ -2573,13 +2576,15 @@ class PLC:
                         txt.write(
                             self.__counter_one_signal_actuation_inv(
                                 signal,
-                                faults_cab_counter,
-                                faults_cntr_marker,
+                                faults_cab_counter ,
+                                falsities_cntr_marker if sigtype in ['Mops3',
+                                                                     'Mups3',
+                                                                     'Mops3A',]
+                                else faults_cntr_marker,
                             )
                         )
 
             txt.write('\n// Недостоверности КСПА\n')
-            falsities_cntr_marker = config.cntrs_dict["Недостоверности"]
             falsities_cab_counter = (
                 f'{self.reset_position}_CAB_{falsities_cntr_marker}_CNT'
             )

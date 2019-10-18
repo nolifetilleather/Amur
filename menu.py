@@ -192,6 +192,7 @@ def menu(plc):
                     f'Выполняется операция '
                     f'"{available_operations[key][0]}"'
                 )
+                # available_operations[key][2]()
                 try:
                     available_operations[key][2]()
                     print(
