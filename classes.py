@@ -100,13 +100,13 @@ class SignalsList(list):
         for signal in self:
             if (
                     isinstance(signal, Signal)
-                    and
-                    isinstance(signal.location, Location)
             ):
                 if (
                         signal.sigtype in sigtypes_list
                         and
-                        signal.location.fire_fightings_cntrs is None
+                        (signal.location is None
+                         or
+                         signal.location.fire_fightings_cntrs is None)
                         and
                         signal.ff_out is None
                 ):
@@ -412,10 +412,15 @@ class Position:
 
         # аналоги
         def sgnl_end(sgnl):
-            from re import findall
-            num = findall(r'\d+', sgnl.name)[-1]
-            let = findall(r'\D+', sgnl.name)[-1]
-            result = let + num
+            from re import findall, split
+            num = findall(r'\d+', sgnl)[-1]
+            if split(r'\d+', sgnl)[-1].isalpha():
+                let = findall(r'\D+', sgnl)[-2]
+                let2 = findall(r'\D+', sgnl)[-1]
+                result = let + num + let2
+            else:
+                let = findall(r'\D+', sgnl)[-1]
+                result = let + num
             return result
 
         def ai_write_to_txt(sgnl, file):
