@@ -2600,7 +2600,7 @@ class PLC:
                         txt.write(
                             self.__counter_one_signal_actuation_inv(
                                 signal,
-                                faults_cab_counter ,
+                                faults_cab_counter,
                                 dct[sigtype],
                             )
                         )
