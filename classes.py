@@ -395,22 +395,6 @@ class Position:
         .sigtype которых входят в
         config.sigtypes_for_input_txt.
         """
-        # for signal in self.signals_list:
-        #    print(f'{signal.name} {signal.sigtype}')
-        txt.write(f'// {self.name_for_comment}\n')
-        # дискреты
-        for sigtype in config.sigtypes_discrete_for_input:
-            txt.write(f'// {sigtype}\n')
-            for signal in self.signals_list:
-                if signal.sigtype == sigtype:
-                    txt.write(
-                        f'{signal.name}(.IVXX, .MBIN, '
-                        f'{signal.plc.reset_position}_CORS.XORS, '
-                        f'.IDVX, .IFXX, SYS_LNG.XLNG, {signal.styp});\n'
-                    )
-            txt.write('\n')
-
-        # аналоги
         def sgnl_end(sgnl):
             from re import findall, split
             num = findall(r'\d+', sgnl.name)[-1]
@@ -423,6 +407,34 @@ class Position:
                 result = let + num
             return result
 
+        txt.write(f'// {self.name_for_comment}\n')
+
+        # дискреты
+        for sigtype in config.sigtypes_discrete_for_input:
+            txt.write(f'// {sigtype}\n')
+            for signal in self.signals_list:
+                if signal.sigtype == sigtype and signal.styp != '6':
+                    txt.write(
+                        f'{signal.name}(.IVXX, .MBIN, '
+                        f'{signal.plc.reset_position}_CORS.XORS, '
+                        f'.IDVX, .IFXX, SYS_LNG.XLNG, {signal.styp});\n'
+                    )
+                elif signal.sigtype == sigtype and signal.styp == '6':
+                    txt.write(
+                        f'{sgnl_end(signal)}(_IO_{signal.address});\n'
+                        +
+                        '{0}({1}.XVLX, .MBIN, {2}_CORS.XORS, '
+                        '{1}.DVXX, .IFXX, SYS_LNG.XLNG, {3});\n'
+                        .format(
+                            signal.name,
+                            sgnl_end(signal),
+                            self.name,
+                            signal.styp,
+                        )
+                    )
+            txt.write('\n')
+
+        # аналоги
         def ai_write_to_txt(sgnl, file):
             dct = {
                 True: 'TRUE',
@@ -520,7 +532,7 @@ class Position:
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$ COUNTING $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
     @staticmethod
-    def __counter_one_signal_actuation(
+    def counter_one_signal_actuation(
             signal,
             counter,
             cntr_marker,
@@ -553,7 +565,7 @@ class Position:
             else:
                 for signal in location.signals_list:
                     txt.write(
-                        Position.__counter_one_signal_actuation(
+                        Position.counter_one_signal_actuation(
                             signal,
                             counter,
                             cntr_marker,
@@ -727,7 +739,7 @@ class Position:
                 for signal in signals_for_counting:
                     if signal.sigtype == sigtype:
                         txt.write(
-                            self.__counter_one_signal_actuation(
+                            self.counter_one_signal_actuation(
                                 signal,
                                 counter,
                                 cntr_marker,
@@ -747,7 +759,7 @@ class Position:
                 for signal in signals_for_counting:
                     if signal.sigtype == sigtype:
                         txt.write(
-                            self.__counter_one_signal_actuation(
+                            self.counter_one_signal_actuation(
                                 signal,
                                 counter,
                                 cntr_marker,
@@ -778,7 +790,7 @@ class Position:
                               signal.location.fire_fightings_cntrs is None))
                     ):
                         txt.write(
-                            self.__counter_one_signal_actuation(
+                            self.counter_one_signal_actuation(
                                 signal,
                                 counter,
                                 cntr_marker,
@@ -808,7 +820,7 @@ class Position:
                               signal.location.fire_fightings_cntrs is None))
                     ):
                         txt.write(
-                            self.__counter_one_signal_actuation(
+                            self.counter_one_signal_actuation(
                                 signal,
                                 counter,
                                 cntr_marker,
@@ -918,7 +930,7 @@ class Position:
                     for signal in location.signals_list:
                         if signal.ff_out is None:
                             txt.write(
-                                self.__counter_one_signal_actuation(
+                                self.counter_one_signal_actuation(
                                     signal,
                                     counter,
                                     cntr_marker,
@@ -950,7 +962,7 @@ class Position:
                                   .location.fire_fightings_cntrs is not None))
                         ):
                             txt.write(
-                                self.__counter_one_signal_actuation(
+                                self.counter_one_signal_actuation(
                                     signal,
                                     counter,
                                     cntr_marker,
@@ -985,7 +997,7 @@ class Position:
                                   .location.fire_fightings_cntrs is not None))
                         ):
                             txt.write(
-                                self.__counter_one_signal_actuation(
+                                self.counter_one_signal_actuation(
                                     signal,
                                     counter,
                                     cntr_marker,
@@ -1048,7 +1060,7 @@ class Position:
                     ):
                         for signal in location.signals_list:
                             txt.write(
-                                self.__counter_one_signal_actuation(
+                                self.counter_one_signal_actuation(
                                     signal,
                                     counter,
                                     cntr_marker,
@@ -1221,11 +1233,11 @@ class Position:
                 f'_IO_IX{self.plc.reg}_0_{data["Address 1"][i]};'
 
             data['Status'][i] = \
-                f'_IO_QX{self.plc.reg}_1_{data["Address 1"][i]}:=' \
+                f'_IO_QX{self.plc.reg}_1_{data["Address 2"][i]}:=' \
                 f'{data["Name"][i]}.Status;'
 
             data['Blnk'][i] = \
-                f'_IO_QX{self.plc.reg}_1_{data["Address 1"][i]}:=' \
+                f'_IO_QX{self.plc.coil}_1_{data["Address 1"][i]}:=' \
                 f'{data["Name"][i]}.Blnk;'
 
             data['XRPX'][i] = \
@@ -1240,7 +1252,7 @@ class Position:
 
                 data['XVLX'][i] = \
                     f'_IO_QX{self.plc.reg}_1_{data["Address 3"][i]}:=' \
-                    f'{data["Name"][i]}.XVLX'
+                    f'{data["Name"][i]}.XVLX;'
 
                 data['Blnk_RP / Blnk_Fr'][i] = \
                     f'_IO_QX{self.plc.coil}_1_{data["Address 2"][i]}:=' \
@@ -1284,29 +1296,32 @@ class Position:
 
         # ТУШЕНИЕ
         if self.tush_addr is not None:
+            tush_addr = int(self.tush_addr)
             txt.write('// Тушение\n')
             txt.write(f'(* {self.name_for_comment} *)\n')
-            txt.write(
-                f'{self.name}_UPG.MBIN:='
-                f'_IO_IX{self.plc.reg}_0_{self.tush_addr};\n'
-            )
-            for i in range(len(config.weintek_upg_tails_reg)):
-                tail = config.weintek_upg_tails_reg[i]
+            for upg_marker in self.upg_markers:
                 txt.write(
-                    f'_IO_QX{self.plc.reg}_1_{int(self.tush_addr)+1+i}:='
-                    f'{self.name}_UPG.{tail};\n'
+                    f'{self.name}_{upg_marker}.MBIN:='
+                    f'_IO_IX{self.plc.reg}_0_{tush_addr};\n'
                 )
-            for i in range(len(config.weintek_upg_tails_coils)):
-                tail = config.weintek_upg_tails_coils[i]
+                for i in range(len(config.weintek_upg_tails_reg)):
+                    tail = config.weintek_upg_tails_reg[i]
+                    txt.write(
+                        f'_IO_QX{self.plc.reg}_1_{int(tush_addr)+1+i}:='
+                        f'{self.name}_{upg_marker}.{tail};\n'
+                    )
+                for i in range(len(config.weintek_upg_tails_coils)):
+                    tail = config.weintek_upg_tails_coils[i]
+                    txt.write(
+                        f'_IO_QX{self.plc.coil}_1_{int(tush_addr)+i}:='
+                        f'{self.name}_{upg_marker}.{tail};\n'
+                    )
                 txt.write(
-                    f'_IO_QX{self.plc.coil}_1_{int(self.tush_addr)+i}:='
-                    f'{self.name}_UPG.{tail};\n'
+                    f'_IO_QX{self.plc.coil}_1_{int(tush_addr)+5}:='
+                    f'{self.name}_{upg_marker}.XCPX AND '
+                    f'{self.name}_{upg_marker}.XDOF;\n\n'
                 )
-            txt.write(
-                f'_IO_QX{self.plc.coil}_1_{int(self.tush_addr)+5}:='
-                f'{self.name}_UPG.XCPX AND '
-                f'{self.name}_UPG.XDOF;\n\n'
-            )
+                tush_addr += 6
 
         # ЗАДВИЖКИ
         if (
@@ -1371,7 +1386,7 @@ class Position:
                 for location in self.locations_list:
                     if signal.styp == location.name:
                         txt.write(
-                            f'_IO_QX{self.plc.reg}_1_'
+                            f'_IO_QX{self.plc.coil}_1_'
                             f'{int(self.xsy_addr) + i}:='
                             f'{signal.name}.OXON;\n'
                         )
@@ -2567,8 +2582,17 @@ class PLC:
 
             txt.write('\n// Неисправности КСПА\n')
             faults_cab_counter = (
-                f'{self.reset_position}_CAB_{falsities_cntr_marker}_CNT'
+                f'{self.reset_position}_CAB_{faults_cntr_marker}_CNT'
             )
+
+            dct = {
+                'Mops3': config.cntrs_dict["Недостоверности"],
+                'Mups3': config.cntrs_dict["Недостоверности"],
+                'Mops3A': config.cntrs_dict["Недостоверности"],
+                'DIAG_DI': 'XVLX',
+                'DIAG_Mod': config.cntrs_dict["Неисправности"],
+            }
+
             for sigtype in config.sigtypes_for_kspa_faults_in_counting:
                 txt.write(f'// {sigtype}\n')
                 for signal in self.__signals_list:
@@ -2577,10 +2601,7 @@ class PLC:
                             self.__counter_one_signal_actuation_inv(
                                 signal,
                                 faults_cab_counter ,
-                                falsities_cntr_marker if sigtype in ['Mops3',
-                                                                     'Mups3',
-                                                                     'Mops3A',]
-                                else faults_cntr_marker,
+                                dct[sigtype],
                             )
                         )
 
@@ -2591,9 +2612,21 @@ class PLC:
             for sigtype in config.sigtypes_for_kspa_falsities_in_counting:
                 txt.write(f'// {sigtype}\n')
                 for signal in self.__signals_list:
-                    if signal.sigtype == sigtype:
+                    if (
+                            signal.sigtype == sigtype
+                            and
+                            signal.sigtype != 'DIAG_DI'
+                    ):
                         txt.write(
                             self.__counter_one_signal_actuation_inv(
+                                signal,
+                                falsities_cab_counter,
+                                falsities_cntr_marker,
+                            )
+                        )
+                    elif signal.sigtype == 'DIAG_DI':
+                        txt.write(
+                            Position.counter_one_signal_actuation(
                                 signal,
                                 falsities_cab_counter,
                                 falsities_cntr_marker,
@@ -2881,8 +2914,8 @@ class PLC:
                         if signal.sigtype == sigtype:
                             if sigtype == 'DIAG_DI':
                                 txt.write(
-                                    '_IO_QX{0}_1_{2}: = {1}.XVLX;\n'
-                                    '_IO_QX{0}_1_{3}: = {1}.DVXX;\n'.format(
+                                    '_IO_QX{0}_1_{2}:={1}.XVLX;\n'
+                                    '_IO_QX{0}_1_{3}:={1}.DVXX;\n'.format(
                                         self.coil,
                                         signal.name,
                                         int(self.diag_addr)+1+n,
@@ -2892,7 +2925,7 @@ class PLC:
                                 n += 2
                             elif sigtype == 'DIAG_Mod':
                                 txt.write(
-                                    '_IO_QX{0}_1_{2}: = {1}.FXXX;\n'.format(
+                                    '_IO_QX{0}_1_{2}:={1}.FXXX;\n'.format(
                                         self.coil,
                                         signal.name,
                                         int(self.diag_addr) + 1 + n,
@@ -2901,7 +2934,7 @@ class PLC:
                                 n += 1
                             elif sigtype in ['Mops3', 'Mups3', 'Mops3A']:
                                 txt.write(
-                                    '_IO_QX{0}_1_{2}: = {1}.DVXX;\n'.format(
+                                    '_IO_QX{0}_1_{2}:={1}.DVXX;\n'.format(
                                         self.coil,
                                         signal.name,
                                         int(self.diag_addr) + 1 + n,
