@@ -56,17 +56,15 @@ def menu(plc):
                 True,
             ],
             [
-                'Сформировать Oxon.txt',
-                plc.ready_for_mops_mups(),
-                plc.establishing_oxon_txt,
+                'Сформировать Reset_MOPS3a.txt',
+                plc.ready_for_reset_mops3a(),
+                plc.establishing_reset_mops3a_txt,
                 True,
             ],
             [
-                'Сформировать Reset_MOPS.txt',
-                plc.ready_for_mops_mups()
-                and
-                plc.contains_devtype_in_devices_list('MOPS3a'),
-                plc.establishing_reset_mops3a_txt,
+                'Сформировать Oxon.txt',
+                plc.ready_for_oxon(),
+                plc.establishing_oxon_txt,
                 True,
             ],
             [
@@ -76,22 +74,16 @@ def menu(plc):
                 True,
             ],
             [
-                'Сформировать Diag_ST.txt',
-                plc.ready_for_diag_st(),
-                plc.establishing_diag_st_txt,
-                True,
-            ],
-            [
                 'Сформировать To_SAU.txt',
                 plc.ready_for_to_sau(),
                 plc.establishing_to_sau_txt,
                 True,
             ],
             [
-                'Сформировать все доступные для формирования файлы',
+                'Сформировать Diag_ST.txt',
+                plc.ready_for_diag_st(),
+                plc.establishing_diag_st_txt,
                 True,
-                None,
-                False,
             ],
             # [
             #    'Сформировать таблицу исходных данных',
@@ -99,6 +91,12 @@ def menu(plc):
             #    plc.establishing_datatable_to_xlsx,
             #    True,
             # ],
+            [
+                'Сформировать все доступные для формирования файлы',
+                True,
+                None,
+                False,
+            ],
             [
                 'Вывести инструкцию на экран',
                 True,
@@ -123,18 +121,22 @@ def menu(plc):
         available_operations = {}
         operation_num = 1
         for lst in operations:
-            if lst[1]:
+            if lst[1] and lst[0] != 'Выход':
                 available_operations[operation_num] = []
                 available_operations[operation_num] += lst[0:4]
                 operation_num += 1
+            elif lst[1] and lst[0] == 'Выход':
+                available_operations[0] = []
+                available_operations[0] += lst[0:4]
 
         print(
             '\tВведите через пробел номера необходимых операций.\n'
             '\tДоступные операции:\n'
         )
 
-        for key in range(len(available_operations)):
-            print(f'{key+1}.\t{available_operations[key+1][0]}')
+        for key in range(len(available_operations) - 1):
+            print(f'{key+1}.\t{available_operations[key + 1][0]}')
+        print(f'{0}.\t{available_operations[0][0]}')
 
         choice = input().split()
 

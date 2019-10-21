@@ -40,6 +40,10 @@ class Signal:
 
 class SignalsList(list):
 
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$ ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ $$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
     def has_any_signal_with_sigtype_in(self, sigtypes_list):
         flg = False
         for signal in self:
@@ -48,33 +52,6 @@ class SignalsList(list):
                     flg = True
                     break
         return flg
-
-    # $$$$$$$$$$$$$$ ПРОВЕРКА НАЛИЧИЯ СИГНАЛОВ $$$$$$$$$$$$$$$$$$$
-    # $$$$$$$$$$$$$$            ДЛЯ            $$$$$$$$$$$$$$$$$$$
-    # $$$$$$$$$$$$$$   INPUT, OUTPUT, ALARMING $$$$$$$$$$$$$$$$$$$
-
-    def contains_signals_for_input(self):
-        return self.has_any_signal_with_sigtype_in(config.sigtypes_for_input)
-
-    def contains_signals_for_output(self):
-        return self.has_any_signal_with_sigtype_in(config.sigtypes_for_output)
-
-    def contains_signals_for_alarming(self):
-        flg = False
-        for signal in self:
-            if isinstance(signal, Signal):
-                if (
-                        signal.sigtype in config.sigtypes_for_alarming
-                        and
-                        signal.ff_out is None
-                ):
-                    flg = True
-                    break
-        return flg
-
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-    # $$$$$$$$$$ ПРОВЕРКА НАЛИЧИЯ СИГНАЛОВ ДЛЯ COUNTING $$$$$$$$$$
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
     def has_any_ff_or_ffo_signal_with_sigtype_in(self, sigtypes_list):
         flg = False
@@ -107,6 +84,29 @@ class SignalsList(list):
                         (signal.location is None
                          or
                          signal.location.fire_fightings_cntrs is None)
+                        and
+                        signal.ff_out is None
+                ):
+                    flg = True
+                    break
+        return flg
+
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$$ ПРОВЕРКИ НАЛИЧИЯ $$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+    def contains_signals_for_input(self):
+        return self.has_any_signal_with_sigtype_in(config.sigtypes_for_input)
+
+    def contains_signals_for_output(self):
+        return self.has_any_signal_with_sigtype_in(config.sigtypes_for_output)
+
+    def contains_signals_for_alarming(self):
+        flg = False
+        for signal in self:
+            if isinstance(signal, Signal):
+                if (
+                        signal.sigtype in config.sigtypes_for_alarming
                         and
                         signal.ff_out is None
                 ):
@@ -175,6 +175,23 @@ class SignalsList(list):
                 break
         return flg
 
+    def contains_signals_for_weintek_diag(self):
+        return (
+            any(signal.sigtype in config.sigtypes_diag_for_weintek
+                for signal in self)
+        )
+
+    def contains_signals_for_to_sau(self):
+        return (
+            any(signal.sigtype in config.sigtypes_for_to_sau
+                for signal in self)
+        )
+
+    def contains_signals_for_diag_st(self):
+        return self.has_any_signal_with_sigtype_in(
+            config.sigtypes_for_diag_st
+        )
+
     def contains_ff_or_ffo_signals_with_warning(self):
         flg = False
         for signal in self:
@@ -212,27 +229,6 @@ class SignalsList(list):
                     flg = True
                     break
         return flg
-
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-    # $$$$$$$$$$$ ПРОВЕРКА НАЛИЧИЯ СИГНАЛОВ ДЛЯ DIAG_ST $$$$$$$$$$
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-    def contains_signals_for_diag_st(self):
-        return self.has_any_signal_with_sigtype_in(
-            config.sigtypes_for_diag_st
-        )
-
-    def contains_signals_for_weintek_diag(self):
-        return (
-            any(signal.sigtype in config.sigtypes_diag_for_weintek
-                for signal in self)
-        )
-
-    def contains_signals_for_to_sau(self):
-        return (
-            any(signal.sigtype in config.sigtypes_for_to_sau
-                for signal in self)
-        )
 
 
 class Location:
@@ -325,211 +321,16 @@ class Position:
         self.counters_for_sum = []
         self.bool_counters = set()
 
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$ ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ $$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
     @staticmethod
     def format_position_name(name):
         frmt_name = name.replace(' ', '').replace('-', '_')
         if not frmt_name[0].isalpha():
             frmt_name = 'P' + frmt_name
         return frmt_name
-
-    def contains_locations_with_warning(self):
-        """
-        Возвращет True если в списке locations_list
-        есть экземпляр Location атрибут .warning_cntr
-        которого == True.
-        Если такого экземпляра нет - возвращает False.
-        """
-        return (
-            any(location.warning_cntr for location in self.locations_list)
-        )
-
-    def contains_locations_with_warning_and_fire_fighting(self):
-        """
-        Возвращет True если в списке locations_list
-        есть экземпляр Location атрибут .warning_cntr
-        которого True, а атрибут .fire_fightings_cntrs
-        is not None.
-        Если такого экземпляра нет - возвращает False.
-        """
-        return any(
-            location.warning_cntr
-            and
-            location.fire_fightings_cntrs is not None
-            for location in self.locations_list
-        )
-
-    def contains_locations_with_warning_without_fire_fighting(self):
-        """
-        Возвращет True если в списке locations_list
-        есть экземпляр Location атрибут .warning_cntr
-        которого is True, а атрибут .fire_fightings_cntrs
-        is None.
-        Если такого экземпляра нет - возвращает False.
-        """
-        return any(
-            location.warning_cntr
-            and
-            location.fire_fightings_cntrs is None
-            for location in self.locations_list
-        )
-
-    def contains_locations_with_fire(self):
-        """
-        Возвращет True если в списке locations_list
-        есть экземпляр Location атрибут .fire_cntr
-        которого == True.
-        Если такого экземпляра нет - возвращает False.
-        """
-        return any(
-            location.fire_cntr for location in self.locations_list
-        )
-
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-    # $$$$$$$$$$$$$$$$$ ЗАПИСЬ ST КОДА В ФАЙЛЫ $$$$$$$$$$$$$$$$$$$
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-    def input_write_to_txt(self, txt):
-        """
-        Метод записывает в txt строки кода на ST.
-        В коде участвуют все сигналы из self.signals_list
-        .sigtype которых входят в
-        config.sigtypes_for_input_txt.
-        """
-        def sgnl_end(sgnl):
-            from re import findall, split
-            num = findall(r'\d+', sgnl.name)[-1]
-            if split(r'\d+', sgnl.name)[-1].isalpha():
-                let = findall(r'\D+', sgnl.name)[-2]
-                let2 = findall(r'\D+', sgnl.name)[-1]
-                result = let + num + let2
-            else:
-                let = findall(r'\D+', sgnl.name)[-1]
-                result = let + num
-            return result
-
-        txt.write(f'// {self.name_for_comment}\n')
-
-        # дискреты
-        for sigtype in config.sigtypes_discrete_for_input:
-            txt.write(f'// {sigtype}\n')
-            for signal in self.signals_list:
-                if signal.sigtype == sigtype and signal.styp != '6':
-                    txt.write(
-                        f'{signal.name}(.IVXX, .MBIN, '
-                        f'{signal.plc.reset_position}_CORS.XORS, '
-                        f'.IDVX, .IFXX, SYS_LNG.XLNG, {signal.styp});\n'
-                    )
-                elif signal.sigtype == sigtype and signal.styp == '6':
-                    txt.write(
-                        f'{sgnl_end(signal)}(_IO_{signal.address});\n'
-                        +
-                        '{0}({1}.XVLX, .MBIN, {2}_CORS.XORS, '
-                        '{1}.DVXX, .IFXX, SYS_LNG.XLNG, {3});\n'
-                        .format(
-                            signal.name,
-                            sgnl_end(signal),
-                            self.name,
-                            signal.styp,
-                        )
-                    )
-            txt.write('\n')
-
-        # аналоги
-        def ai_write_to_txt(sgnl, file):
-            dct = {
-                True: 'TRUE',
-                False: 'FALSE',
-            }
-            file.write(
-                f'{sgnl_end(sgnl)}'
-                f'(.IN1, .IN2, 1, {dct[sgnl.styp == "res"]});\n'
-                +
-                '{0}({1}.XAXX, {1}.XVLX1, {1}.XVLX2, '
-                '.MBIN, SYS_LNG.XLNG, {2});\n'.format(
-                    sgnl.name,
-                    sgnl_end(sgnl),
-                    dct[sgnl.styp == "res"],
-                )
-            )
-
-        for sigtype in config.sigtypes_analog_for_input:
-            txt.write(f'// {sigtype}\n')
-            ai_with_res = [
-                signal for signal in self.signals_list
-                if (
-                        signal.sigtype in config.sigtypes_analog_for_input
-                        and
-                        signal.styp in config.styp_res_ai_for_input
-                )
-            ]
-            ai_without_res = [
-                signal for signal in self.signals_list
-                if (
-                        signal.sigtype in config.sigtypes_analog_for_input
-                        and
-                        signal.styp not in config.styp_res_ai_for_input
-                )
-            ]
-            if len(ai_with_res) > 0:
-                txt.write('// Нерезервированные\n')
-                for signal in ai_with_res:
-                    ai_write_to_txt(signal, txt)
-                txt.write('\n')
-            if len(ai_without_res) > 0:
-                txt.write('// Резервированные\n')
-                for signal in ai_without_res:
-                    ai_write_to_txt(signal, txt)
-
-    def output_write_to_txt(self, txt):
-        """
-        Метод записывает в txt строки кода на ST.
-        В коде участвуют все сигналы из SignalsList
-        .sigtype которых входят в
-        config.sigtypes_for_output_txt.
-        """
-        txt.write(f'// {self.name_for_comment}\n')
-        for sigtype in config.sigtypes_for_output:
-            txt.write(f'// {sigtype}\n')
-            for signal in self.signals_list:
-                if signal.sigtype == sigtype:
-                    txt.write(
-                        f'{signal.name}(.IVXX, .MBIN, .CAON, '
-                        '.SCMX, .STYP, SYS_LNG.XLNG, .IDVX);\n'
-                    )
-            txt.write('\n')
-
-    def alarming_write_to_txt(self, txt):
-        """
-        Метод записывает в txt строки кода на ST.
-        В коде участвуют все сигналы из SignalsList
-        .sigtype которых входят в
-        config.sigtypes_for_alarming_txt и при этом
-        их атрибут .ff_out is None.
-        """
-        if self.contains_locations_with_warning():
-            warning_part = f' OR {self.name}_XWRX_CNT > 0'
-        else:
-            warning_part = ''
-
-        txt.write(f'// {self.name_for_comment}\n')
-        for sigtype in config.sigtypes_for_alarming:
-            txt.write(f'// {sigtype}\n')
-            for signal in self.signals_list:
-                if (
-                        signal.sigtype == sigtype
-                        and
-                        signal.ff_out is None
-                        and
-                        signal.styp not in config.styp_except_for_alarming
-                ):
-                    txt.write(
-                        f'{signal.name}.CAON:='
-                        f'{signal.position.name}_XFRX_CNT > 0'
-                        f'{warning_part};\n'
-                    )
-            txt.write('\n')
-
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$ COUNTING $$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
     @staticmethod
     def counter_one_signal_actuation(
@@ -632,6 +433,211 @@ class Position:
                     f'AND {second_signal}.{cntr_marker}, {counter});\n'
                 )
 
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$ ПРОВЕРКИ НАЛИЧИЯ $$$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+    def contains_locations_with_warning(self):
+        """
+        Возвращет True если в списке locations_list
+        есть экземпляр Location атрибут .warning_cntr
+        которого == True.
+        Если такого экземпляра нет - возвращает False.
+        """
+        return (
+            any(location.warning_cntr for location in self.locations_list)
+        )
+
+    def contains_locations_with_warning_and_fire_fighting(self):
+        """
+        Возвращет True если в списке locations_list
+        есть экземпляр Location атрибут .warning_cntr
+        которого True, а атрибут .fire_fightings_cntrs
+        is not None.
+        Если такого экземпляра нет - возвращает False.
+        """
+        return any(
+            location.warning_cntr
+            and
+            location.fire_fightings_cntrs is not None
+            for location in self.locations_list
+        )
+
+    def contains_locations_with_warning_without_fire_fighting(self):
+        """
+        Возвращет True если в списке locations_list
+        есть экземпляр Location атрибут .warning_cntr
+        которого is True, а атрибут .fire_fightings_cntrs
+        is None.
+        Если такого экземпляра нет - возвращает False.
+        """
+        return any(
+            location.warning_cntr
+            and
+            location.fire_fightings_cntrs is None
+            for location in self.locations_list
+        )
+
+    def contains_locations_with_fire(self):
+        """
+        Возвращет True если в списке locations_list
+        есть экземпляр Location атрибут .fire_cntr
+        которого == True.
+        Если такого экземпляра нет - возвращает False.
+        """
+        return any(
+            location.fire_cntr for location in self.locations_list
+        )
+
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$ ЗАПИСЬ ST КОДА В ФАЙЛЫ $$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+    # INPUT
+    def input_write_to_txt(self, txt):
+        """
+        Метод записывает в txt строки кода на ST.
+        В коде участвуют все сигналы из self.signals_list
+        .sigtype которых входят в
+        config.sigtypes_for_input_txt.
+        """
+        def sgnl_end(sgnl):
+            from re import findall, split
+            num = findall(r'\d+', sgnl.name)[-1]
+            if split(r'\d+', sgnl.name)[-1].isalpha():
+                let = findall(r'\D+', sgnl.name)[-2]
+                let2 = findall(r'\D+', sgnl.name)[-1]
+                result = let + num + let2
+            else:
+                let = findall(r'\D+', sgnl.name)[-1]
+                result = let + num
+            return result
+
+        txt.write(f'// {self.name_for_comment}\n')
+
+        # дискреты
+        for sigtype in config.sigtypes_discrete_for_input:
+            txt.write(f'// {sigtype}\n')
+            for signal in self.signals_list:
+                if signal.sigtype == sigtype and signal.styp != '6':
+                    txt.write(
+                        f'{signal.name}(.IVXX, .MBIN, '
+                        f'{signal.plc.reset_position}_CORS.XORS, '
+                        f'.IDVX, .IFXX, SYS_LNG.XLNG, {signal.styp});\n'
+                    )
+                elif signal.sigtype == sigtype and signal.styp == '6':
+                    txt.write(
+                        f'{sgnl_end(signal)}(_IO_{signal.address});\n'
+                        +
+                        '{0}({1}.XVLX, .MBIN, {2}_CORS.XORS, '
+                        '{1}.DVXX, .IFXX, SYS_LNG.XLNG, {3});\n'
+                        .format(
+                            signal.name,
+                            sgnl_end(signal),
+                            self.name,
+                            signal.styp,
+                        )
+                    )
+            txt.write('\n')
+
+        # аналоги
+        def ai_write_to_txt(sgnl, file):
+            dct = {
+                True: 'TRUE',
+                False: 'FALSE',
+            }
+            file.write(
+                f'{sgnl_end(sgnl)}'
+                f'(.IN1, .IN2, 1, {dct[sgnl.styp == "res"]});\n'
+                +
+                '{0}({1}.XAXX, {1}.XVLX1, {1}.XVLX2, '
+                '.MBIN, SYS_LNG.XLNG, {2});\n'.format(
+                    sgnl.name,
+                    sgnl_end(sgnl),
+                    dct[sgnl.styp == "res"],
+                )
+            )
+
+        for sigtype in config.sigtypes_analog_for_input:
+            txt.write(f'// {sigtype}\n')
+            ai_with_res = [
+                signal for signal in self.signals_list
+                if (
+                        signal.sigtype in config.sigtypes_analog_for_input
+                        and
+                        signal.styp in config.styp_res_ai_for_input
+                )
+            ]
+            ai_without_res = [
+                signal for signal in self.signals_list
+                if (
+                        signal.sigtype in config.sigtypes_analog_for_input
+                        and
+                        signal.styp not in config.styp_res_ai_for_input
+                )
+            ]
+            if len(ai_with_res) > 0:
+                txt.write('// Нерезервированные\n')
+                for signal in ai_with_res:
+                    ai_write_to_txt(signal, txt)
+                txt.write('\n')
+            if len(ai_without_res) > 0:
+                txt.write('// Резервированные\n')
+                for signal in ai_without_res:
+                    ai_write_to_txt(signal, txt)
+
+    # OUTPUT
+    def output_write_to_txt(self, txt):
+        """
+        Метод записывает в txt строки кода на ST.
+        В коде участвуют все сигналы из SignalsList
+        .sigtype которых входят в
+        config.sigtypes_for_output_txt.
+        """
+        txt.write(f'// {self.name_for_comment}\n')
+        for sigtype in config.sigtypes_for_output:
+            txt.write(f'// {sigtype}\n')
+            for signal in self.signals_list:
+                if signal.sigtype == sigtype:
+                    txt.write(
+                        f'{signal.name}(.IVXX, .MBIN, .CAON, '
+                        '.SCMX, .STYP, SYS_LNG.XLNG, .IDVX);\n'
+                    )
+            txt.write('\n')
+
+    # ALARMING
+    def alarming_write_to_txt(self, txt):
+        """
+        Метод записывает в txt строки кода на ST.
+        В коде участвуют все сигналы из SignalsList
+        .sigtype которых входят в
+        config.sigtypes_for_alarming_txt и при этом
+        их атрибут .ff_out is None.
+        """
+        if self.contains_locations_with_warning():
+            warning_part = f' OR {self.name}_XWRX_CNT > 0'
+        else:
+            warning_part = ''
+
+        txt.write(f'// {self.name_for_comment}\n')
+        for sigtype in config.sigtypes_for_alarming:
+            txt.write(f'// {sigtype}\n')
+            for signal in self.signals_list:
+                if (
+                        signal.sigtype == sigtype
+                        and
+                        signal.ff_out is None
+                        and
+                        signal.styp not in config.styp_except_for_alarming
+                ):
+                    txt.write(
+                        f'{signal.name}.CAON:='
+                        f'{signal.position.name}_XFRX_CNT > 0'
+                        f'{warning_part};\n'
+                    )
+            txt.write('\n')
+
+    # COUNTING
     def counting_write_to_txt(self, txt):
 
         txt.write(f'// {self.name_for_comment}\n')
@@ -1115,6 +1121,7 @@ class Position:
 
         txt.write('\n')
 
+    # WEINTEK
     def weintek_write_to_txt(self, txt):
 
         import pandas as pd
@@ -1398,6 +1405,7 @@ class Position:
         #     index=False,
         # )
 
+    # TO_SAU
     def to_sau_write_to_txt(self, txt):
         if self.signals_list.contains_signals_for_to_sau():
             txt.write(
@@ -2031,13 +2039,9 @@ class PLC:
             'Введите путь для выходных файлов\n'
         ))
 
-    # def print_signals(self):
-    #    for signal in self.__signals_list:
-    #        print(f'{signal.name} {signal.sigtype}')
-
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-    # $$$$$$$$$$$$$$$$$$$$ ЗАПОЛНЕНИЕ СПИСКОВ $$$$$$$$$$$$$$$$$$$$
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$ ДОБАВЛЕНИЕ ЭКЗЕМПЛЯРОВ В СПИСКИ $$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
     def append_signal(self, obj):
         if isinstance(obj, Signal):
@@ -2079,9 +2083,9 @@ class PLC:
                 ' класса Device.'
             )
 
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-    # $$$$$$$$$$$$ ОПЕРАЦИИ НАД ОБЪЕКТАМИ В СПИСКАХ $$$$$$$$$$$$$$
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$ ОПЕРАЦИИ НАД ОБЪЕКТАМИ В СПИСКАХ $$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
     def sort_signals_except_for_diag_signals(self):
 
@@ -2431,10 +2435,60 @@ class PLC:
         )
         print()
 
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-    # $$$$$$$ ПРОВЕРКА ГОТОВНОСТИ К ФОРМИРОВАНИЮ ПРОГРАММ $$$$$$$$
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$ ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ $$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+    @staticmethod
+    def __counter_one_signal_actuation_inv(
+            signal,
+            counter,
+            cntr_marker,
+    ):
+        if signal.styp != 'inv':
+            return (
+                f'{counter}:=Count({signal.name}.{cntr_marker}, {counter});\n'
+            )
+        elif signal.styp == 'inv':
+            return (
+                f'{counter}:='
+                f'Count((NOT {signal.name}.{cntr_marker}), {counter});\n'
+            )
+
+    def __contains_devtype_in_devices_list(self, devtype):
+        return (
+            any(device.devtype == devtype for device in self.__devices_list)
+        )
+
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    # $$$$$$$$$$$ ПРОВЕРКА ГОТОВНОСТИ К ФОРМИРОВАНИЮ ПРОГРАММ $$$$$$$$$$
+    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+    # INPUT
+    def ready_for_input(self):
+        return (
+            self.__signals_list.contains_signals_for_input()
+            and
+            self.signals_reformed
+        )
+
+    # OUTPUT
+    def ready_for_output(self):
+        return (
+            self.__signals_list.contains_signals_for_output()
+            and
+            self.signals_reformed
+        )
+
+    # ALARMING
+    def ready_for_alarming(self):
+        return (
+            self.ready_for_counting()
+            and
+            self.__signals_list.contains_signals_for_alarming()
+        )
+
+    # COUNTING
     def ready_for_counting(self):
         return (
             self.__signals_list.contains_signals_for_counting()
@@ -2446,33 +2500,23 @@ class PLC:
             self.devices_diag_signals_created
         )
 
-    def ready_for_alarming(self):
-        return (
-            self.ready_for_counting()
-            and
-            self.__signals_list.contains_signals_for_alarming()
-        )
-
-    def ready_for_output(self):
-        return (
-            self.__signals_list.contains_signals_for_output()
-            and
-            self.signals_reformed
-        )
-
-    def ready_for_input(self):
-        return (
-            self.__signals_list.contains_signals_for_input()
-            and
-            self.signals_reformed
-        )
-
+    # MOPS_MUPS
     def ready_for_mops_mups(self):
         return self.devices_reformed
 
-    def ready_for_datatable(self):
-        return self.__counting_was_formed and self.__mops_mups_was_formed
+    # RESET_MOPS3A
+    def ready_for_reset_mops3a(self):
+        return (
+                self.devices_reformed
+                and
+                self.__contains_devtype_in_devices_list('MOPS3a')
+        )
 
+    # OXON
+    def ready_for_oxon(self):
+        return self.devices_reformed
+
+    # WEINTEK
     def ready_for_weintek(self):
         return (
                 self.signals_list_filled
@@ -2491,25 +2535,21 @@ class PLC:
                 self.__signals_list.contains_signals_for_weintek_diag()
         )
 
+    # TO_SAU
+    def ready_for_to_sau(self):
+        return self.__signals_list.contains_signals_for_to_sau()
+
+    # DIAG_ST
     def ready_for_diag_st(self):
         return self.__signals_list.contains_signals_for_diag_st()
 
-    def ready_for_to_sau(self):
-        return self.__signals_list.contains_signals_for_to_sau()
+    # DATATABLE
+    def ready_for_datatable(self):
+        return self.__counting_was_formed and self.__mops_mups_was_formed
 
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$ ФОРМИРОВАНИЕ ТЕКСТОВ ПРОГРАММ $$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-    # OUTPUT
-    def establishing_output_txt(self):
-        if self.ready_for_input():
-            txt = open(fr'{self.output_path}\Output.txt', 'w')
-            for position in self.__positions_list:
-                if position.signals_list.contains_signals_for_output():
-                    position.output_write_to_txt(txt)
-            txt.close()
-            return True
 
     # INPUT
     def establishing_input_txt(self):
@@ -2518,6 +2558,16 @@ class PLC:
             for position in self.__positions_list:
                 if position.signals_list.contains_signals_for_input():
                     position.input_write_to_txt(txt)
+            txt.close()
+            return True
+
+    # OUTPUT
+    def establishing_output_txt(self):
+        if self.ready_for_input():
+            txt = open(fr'{self.output_path}\Output.txt', 'w')
+            for position in self.__positions_list:
+                if position.signals_list.contains_signals_for_output():
+                    position.output_write_to_txt(txt)
             txt.close()
             return True
 
@@ -2532,22 +2582,6 @@ class PLC:
             return True
 
     # COUNTING
-    @staticmethod
-    def __counter_one_signal_actuation_inv(
-            signal,
-            counter,
-            cntr_marker,
-    ):
-        if signal.styp != 'inv':
-            return (
-                f'{counter}:=Count({signal.name}.{cntr_marker}, {counter});\n'
-            )
-        elif signal.styp == 'inv':
-            return (
-                f'{counter}:='
-                f'Count((NOT {signal.name}.{cntr_marker}), {counter});\n'
-            )
-
     def establishing_counting_txt(self):
         if self.ready_for_counting():
             txt = open(fr'{self.output_path}\Counting.txt', 'w')
@@ -2717,11 +2751,6 @@ class PLC:
             return True
 
     # MOPS_MUPS
-    def contains_devtype_in_devices_list(self, devtype):
-        return(
-            any(device.devtype == devtype for device in self.__devices_list)
-        )
-
     def establishing_mops_mups_txt(self):
         if self.ready_for_mops_mups():
             txt = open(fr'{self.output_path}\MOPS_MUPS.txt', 'w')
@@ -2784,7 +2813,7 @@ class PLC:
                     txt.write(device.mops_reset_text())
 
             #  МОПСЫ 3а
-            if self.contains_devtype_in_devices_list('MOPS3a'):
+            if self.__contains_devtype_in_devices_list('MOPS3a'):
                 for device in self.__devices_list:
                     if device.mops3a_m_text() is not None:
                         txt.write(device.mops3a_m_text())
@@ -2821,12 +2850,8 @@ class PLC:
 
     # Reset_MOPS3a
     def establishing_reset_mops3a_txt(self):
-        if (
-            self.ready_for_mops_mups()
-            and
-            self.contains_devtype_in_devices_list('MOPS3a')
-        ):
-            txt = open(fr'{self.output_path}\Reset_MOPS.txt', 'w')
+        if self.ready_for_reset_mops3a():
+            txt = open(fr'{self.output_path}\Reset_MOPS3a.txt', 'w')
             txt.write(
                 '// Сброс\n'
                 f'{self.reset_position}_COOF(.COOF, .CSOF, .CPOF, .CWOF);\n'
@@ -2853,41 +2878,11 @@ class PLC:
 
     # OXON
     def establishing_oxon_txt(self):
-        if self.ready_for_mops_mups():
+        if self.ready_for_oxon():
             txt = open(fr'{self.output_path}\Oxon.txt', 'w')
             for device in self.__devices_list:
                 if device.mups_oxon_text() is not None:
                     txt.write(device.mups_oxon_text())
-            txt.close()
-            return True
-
-    # DIAG_ST
-    def establishing_diag_st_txt(self):
-        if self.ready_for_diag_st():
-            txt = open(fr'{self.output_path}\Diag_ST.txt', 'w')
-
-            diag_st_di = [signal for signal in self.__signals_list
-                          if signal.sigtype in config.sigtypes_di_for_diag_st]
-
-            diag_st_modules = [
-                signal for signal in self.__signals_list
-                if signal.sigtype in config.sigtypes_modules_for_types
-            ]
-
-            for signal in diag_st_di:
-                txt.write(
-                    f'{signal.name}(_IO_{signal.address}, SYS_LNG.XLNG);\n'
-                )
-            if len(diag_st_di) != 0:
-                txt.write('\n')
-
-            for signal in diag_st_modules:
-                txt.write(
-                    f'{signal.name}(_IO_{signal.address}.Status);\n'
-                )
-            if len(diag_st_modules) != 0:
-                txt.write('\n')
-
             txt.close()
             return True
 
@@ -2967,6 +2962,37 @@ class PLC:
             txt.close()
             return True
 
+    # DIAG_ST
+    def establishing_diag_st_txt(self):
+        if self.ready_for_diag_st():
+            txt = open(fr'{self.output_path}\Diag_ST.txt', 'w')
+
+            diag_st_di = [signal for signal in self.__signals_list
+                          if signal.sigtype in config.sigtypes_di_for_diag_st]
+
+            diag_st_modules = [
+                signal for signal in self.__signals_list
+                if signal.sigtype in config.sigtypes_modules_for_types
+            ]
+
+            for signal in diag_st_di:
+                txt.write(
+                    f'{signal.name}(_IO_{signal.address}, SYS_LNG.XLNG);\n'
+                )
+            if len(diag_st_di) != 0:
+                txt.write('\n')
+
+            for signal in diag_st_modules:
+                txt.write(
+                    f'{signal.name}(_IO_{signal.address}.Status);\n'
+                )
+            if len(diag_st_modules) != 0:
+                txt.write('\n')
+
+            txt.close()
+            return True
+
+    # DATATABLE
     def __datatable(self, category):
 
         for position in self.__positions_list:
@@ -3130,6 +3156,7 @@ class PLC:
                 header=False,
             )
 
+    # DATATABLE
     def establishing_datatable_to_xlsx(self):
         if self.ready_for_datatable():
             if self.cabinet_category == '2':
