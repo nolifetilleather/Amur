@@ -64,14 +64,60 @@ def between_two_markers_search(marker, strng):
     # первого и перед вторым "маркером".
 
 
-# $$$$$$$$$$$$$$$$$$$$$$$ INPUT, OUTPUT, ALARMING $$$$$$$$$$$$$$$$$$$$$$
+# $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ INPUT $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+"""
+Типы сигналов (signal.sigtype) для которых в Input.txt формируются строки вида:
+{signal.name}(.IVXX, .MBIN, {plc.reset_position}_CORS.XORS, .IDVX, .IFXX, 
+SYS_LNG.XLNG, {signal.styp});
+
+Пример:
+P0_15_04HS1002(.IVXX, .MBIN, P0_22_CORS.XORS, .IDVX, .IFXX, SYS_LNG.XLNG, 4);
+"""
 sigtypes_discrete_for_input = ['DI_M', 'DI_NM']
+
+"""
+sigtypes_analog_for_input - типы сигналов (signal.sigtype) для которых в 
+Input.txt формируются строки вида:
+
+Если signal.styp входит в styp_ai_reservation_for_input:
+{sgnl_end(signal)}(.IN1, .IN2, 1, FALSE);
+{signal.name}({sgnl_end(signal)}.XAXX, {sgnl_end(signal)}.XVLX1, 
+{sgnl_end(signal)}.XVLX2, .MBIN, SYS_LNG.XLNG, FALSE);
+
+Если signal.styp НЕ входит в styp_ai_reservation_for_input:
+{sgnl_end(signal)}(.IN1, .IN2, 1, TRUE);
+{signal.name}({sgnl_end(signal)}.XAXX, {sgnl_end(signal)}.XVLX1, 
+{sgnl_end(signal)}.XVLX2, .MBIN, SYS_LNG.XLNG, TRUE);
+
+*функцию sgnl_end() см. внутри метода Position.input_write_to_txt(),
+модуль classes.py
+
+Примеры:
+Если signal.styp входит в styp_ai_reservation_for_input:
+HS0001(.IN1, .IN2, 1, FALSE);
+P0_15_04HS0001(HS0001.XAXX, HS0001.XVLX1, HS0001.XVLX2, .MBIN, 
+SYS_LNG.XLNG, FALSE);
+
+Если signal.styp НЕ входит в styp_ai_reservation_for_input:
+HS0004(.IN1, .IN2, 1, TRUE);
+P0_15_04HS0004(HS0004.XAXX, HS0004.XVLX1, HS0004.XVLX2, .MBIN, 
+SYS_LNG.XLNG, TRUE);
+"""
 sigtypes_analog_for_input = ['AI']
+styp_ai_reservation_for_input = ['res']
+
+sigtypes_special_discrete_for_input = ['DI_M']
+
 sigtypes_for_input = sigtypes_discrete_for_input + sigtypes_analog_for_input
-styp_res_ai_for_input = ['res']
+
+styp_special_discrete_for_input = ['6']
+
+# $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ OUTPUT $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 sigtypes_for_output = ['DO_M', 'DO_NM']
+
+# $$$$$$$$$$$$$$$$$$$$$$$$$$$$ ALARMING $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 sigtypes_for_alarming = ['DO_M']
 styp_except_for_alarming = ['-']
@@ -174,6 +220,7 @@ weintek_upg_tails_coils = ('Blnk', 'XFDN', 'OF1N', 'OF2N', 'XBON')
 
 sigtypes_valves_for_weintek = [
     'MOV',
+    'PMP',
 ]
 
 weintek_valves_tails_with_comments = (

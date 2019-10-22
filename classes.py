@@ -95,12 +95,15 @@ class SignalsList(list):
     # $$$$$$$$$$$$$$$$$$$$$$$$$ ПРОВЕРКИ НАЛИЧИЯ $$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+    # INPUT
     def contains_signals_for_input(self):
         return self.has_any_signal_with_sigtype_in(config.sigtypes_for_input)
 
+    # OUTPUT
     def contains_signals_for_output(self):
         return self.has_any_signal_with_sigtype_in(config.sigtypes_for_output)
 
+    # ALARMING
     def contains_signals_for_alarming(self):
         flg = False
         for signal in self:
@@ -114,6 +117,7 @@ class SignalsList(list):
                     break
         return flg
 
+    # COUNTING
     def contains_signals_for_counting(self):
         return self.has_any_signal_with_sigtype_in(
             config.sigtypes_for_counting
@@ -175,23 +179,6 @@ class SignalsList(list):
                 break
         return flg
 
-    def contains_signals_for_weintek_diag(self):
-        return (
-            any(signal.sigtype in config.sigtypes_diag_for_weintek
-                for signal in self)
-        )
-
-    def contains_signals_for_to_sau(self):
-        return (
-            any(signal.sigtype in config.sigtypes_for_to_sau
-                for signal in self)
-        )
-
-    def contains_signals_for_diag_st(self):
-        return self.has_any_signal_with_sigtype_in(
-            config.sigtypes_for_diag_st
-        )
-
     def contains_ff_or_ffo_signals_with_warning(self):
         flg = False
         for signal in self:
@@ -229,6 +216,26 @@ class SignalsList(list):
                     flg = True
                     break
         return flg
+
+    # WEINTEK
+    def contains_signals_for_weintek_diag(self):
+        return (
+            any(signal.sigtype in config.sigtypes_diag_for_weintek
+                for signal in self)
+        )
+
+    # TO SAU
+    def contains_signals_for_to_sau(self):
+        return (
+            any(signal.sigtype in config.sigtypes_for_to_sau
+                for signal in self)
+        )
+
+    # DIAG_ST
+    def contains_signals_for_diag_st(self):
+        return self.has_any_signal_with_sigtype_in(
+            config.sigtypes_for_diag_st
+        )
 
 
 class Location:
@@ -525,16 +532,22 @@ class Position:
                         f'{signal.plc.reset_position}_CORS.XORS, '
                         f'.IDVX, .IFXX, SYS_LNG.XLNG, {signal.styp});\n'
                     )
-                elif signal.sigtype == sigtype and signal.styp == '6':
+                elif (
+                        signal.sigtype in
+                        config.sigtypes_special_discrete_for_input
+                        and
+                        signal.styp in
+                        config.styp_special_discrete_for_input
+                ):
                     txt.write(
-                        f'{sgnl_end(signal)}(_IO_{signal.address});\n'
+                        f'{sgnl_end(signal)}(_IO_{signal.address}_3);\n'
                         +
                         '{0}({1}.XVLX, .MBIN, {2}_CORS.XORS, '
-                        '{1}.DVXX, .IFXX, SYS_LNG.XLNG, {3});\n'
+                        '{1}.DVXX, .IFXX, SYS_LNG.XLNG, {3});\n\n'
                         .format(
                             signal.name,
                             sgnl_end(signal),
-                            self.name,
+                            self.plc.reset_position,
                             signal.styp,
                         )
                     )
@@ -565,7 +578,7 @@ class Position:
                 if (
                         signal.sigtype in config.sigtypes_analog_for_input
                         and
-                        signal.styp in config.styp_res_ai_for_input
+                        signal.styp in config.styp_ai_reservation_for_input
                 )
             ]
             ai_without_res = [
@@ -573,18 +586,20 @@ class Position:
                 if (
                         signal.sigtype in config.sigtypes_analog_for_input
                         and
-                        signal.styp not in config.styp_res_ai_for_input
+                        signal.styp not in config.styp_ai_reservation_for_input
                 )
             ]
             if len(ai_with_res) > 0:
                 txt.write('// Нерезервированные\n')
                 for signal in ai_with_res:
                     ai_write_to_txt(signal, txt)
-                txt.write('\n')
             if len(ai_without_res) > 0:
+                if len(ai_with_res) > 0:
+                    txt.write('\n')
                 txt.write('// Резервированные\n')
                 for signal in ai_without_res:
                     ai_write_to_txt(signal, txt)
+            txt.write('\n')
 
     # OUTPUT
     def output_write_to_txt(self, txt):
@@ -1339,8 +1354,13 @@ class Position:
         ):
             txt.write('// Задвижки\n')
             addr = int(self.mov_addr)
-            for signal in signals_list_without_exc:
-                if signal.sigtype in config.sigtypes_valves_for_weintek:
+            for sigtype in config.sigtypes_valves_for_weintek:
+                txt.write(f'// {sigtype}\n')
+                selected_signals = [
+                    signal for signal in signals_list_without_exc
+                    if signal.sigtype == sigtype
+                ]
+                for signal in selected_signals:
                     txt.write(f'(* {signal.name} *)\n')
                     for el in config.weintek_valves_tails_with_comments[0:5]:
                         txt.write(
@@ -1444,7 +1464,7 @@ class Device:
             )
 
         self.signals_list = []
-        self.__reset_addresses = []
+        self.__reset_addresses = None
 
         self.plc = plc
         self.name = name
@@ -1698,6 +1718,8 @@ class Device:
 
         if self.__mops3a_has_any_s():
 
+            self.__reset_addresses = []
+
             text = f'(* {self.name} *)\n'
             s_signals_lst = []
 
@@ -1845,12 +1867,14 @@ class Device:
     # ТЕСТ/СБРОС МОПСОВ 3А
     def mops3a_test_reset_text(self):
 
-        if self.devtype == 'MOPS3a' and len(self.__reset_addresses) != 0:
+        if self.devtype == 'MOPS3a' and self.__reset_addresses is not None:
 
             text = ''
             first = 1
             second = 16
             cnt = 0
+
+            text += f'(* {self.name} *)\n'
 
             for addr in self.__reset_addresses:
 
