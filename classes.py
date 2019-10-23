@@ -299,6 +299,7 @@ class Position:
             tush_addr=None,
             xsy_addr=None,
             mov_addr=None,
+            ai_addr = None
     ):
 
         if not isinstance(plc, PLC):
@@ -318,6 +319,7 @@ class Position:
         self.tush_addr = tush_addr
         self.xsy_addr = xsy_addr
         self.mov_addr = mov_addr
+        self.ai_addr = ai_addr
 
         self.signals_list = SignalsList()
         self.locations_list = []
@@ -522,8 +524,8 @@ class Position:
 
         txt.write(f'// {self.name_for_comment}\n')
 
-        # дискреты
-        for sigtype in config.sigtypes_discrete_for_input:
+        # дискреты с контролем цепи
+        for sigtype in config.sigtypes_discrete_m_for_input:
             txt.write(f'// {sigtype}\n')
             for signal in self.signals_list:
                 if signal.sigtype == sigtype and signal.styp != '6':
@@ -534,7 +536,7 @@ class Position:
                     )
                 elif (
                         signal.sigtype in
-                        config.sigtypes_special_discrete_for_input
+                        config.sigtypes_special_discrete_m_for_input
                         and
                         signal.styp in
                         config.styp_special_discrete_for_input
@@ -550,6 +552,17 @@ class Position:
                             self.plc.reset_position,
                             signal.styp,
                         )
+                    )
+            txt.write('\n')
+
+        # дискреты без контроля цепи
+        for sigtype in config.sigtypes_discrete_nm_for_input:
+            txt.write(f'// {sigtype}\n')
+            for signal in self.signals_list:
+                if signal.sigtype == sigtype:
+                    txt.write(
+                        f'{signal.name}'
+                        f'({signal.address}, .MBIN, .INVR, SYS_LNG.XLNG);\n'
                     )
             txt.write('\n')
 
@@ -1316,6 +1329,24 @@ class Position:
                         f'{data["XRPX"][i]}\n\n'
                     )
 
+        # АНАЛОГИ
+        if self.ai_addr is not None:
+            ai_addr = int(self.ai_addr)
+            txt.write('// Аналоги\n')
+            for sigtype in config.sigtypes_analog_for_weintek:
+                txt.write(f'// {sigtype}\n')
+                selected_signals = [
+                    signal for signal in self.signals_list
+                    if signal.sigtype == sigtype
+                ]
+                for signal in selected_signals:
+                    txt.write(
+                        f'_IO_QX1_1_{ai_addr}:='
+                        f'ANY_TO_DINT({signal.name}.XVLX);\n'
+                    )
+                    ai_addr += 1
+                txt.write('\n')
+
         # ТУШЕНИЕ
         if self.tush_addr is not None:
             tush_addr = int(self.tush_addr)
@@ -1396,8 +1427,9 @@ class Position:
                             )
                         )
                         first_addr += 1
-                    addr += 3
                     txt.write('\n')
+                    addr += 3
+                txt.write('\n')
 
         # ПЕРЕДАЧА XSY
         if (

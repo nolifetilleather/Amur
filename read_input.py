@@ -127,6 +127,11 @@ def read():
                     if input_frame['MOV_addr'][i] != ''
                     else None
                 )
+                position.ai_addr = (
+                    input_frame['AI_addr'][i]
+                    if input_frame['AI_addr'][i] != ''
+                    else None
+                )
 
         plc.append_position(position)
 

@@ -74,7 +74,19 @@ SYS_LNG.XLNG, {signal.styp});
 Пример:
 P0_15_04HS1002(.IVXX, .MBIN, P0_22_CORS.XORS, .IDVX, .IFXX, SYS_LNG.XLNG, 4);
 """
-sigtypes_discrete_for_input = ['DI_M', 'DI_NM']
+sigtypes_discrete_m_for_input = [
+    'DI_M',
+]
+
+sigtypes_special_discrete_m_for_input = ['DI_M']
+
+"""
+DI_NM
+P0_15_04HS1002(.IVXX, .MBIN, .INVR, SYS_LNG.XLNG);
+"""
+sigtypes_discrete_nm_for_input = [
+    'DI_NM',
+]
 
 """
 sigtypes_analog_for_input - типы сигналов (signal.sigtype) для которых в 
@@ -107,9 +119,7 @@ SYS_LNG.XLNG, TRUE);
 sigtypes_analog_for_input = ['AI']
 styp_ai_reservation_for_input = ['res']
 
-sigtypes_special_discrete_for_input = ['DI_M']
-
-sigtypes_for_input = sigtypes_discrete_for_input + sigtypes_analog_for_input
+sigtypes_for_input = sigtypes_discrete_m_for_input + sigtypes_analog_for_input
 
 styp_special_discrete_for_input = ['6']
 
@@ -199,6 +209,10 @@ sigtypes_di_for_weintek = [
 ]
 sigtypes_do_for_weintek = [
     'DO_M',
+]
+
+sigtypes_analog_for_weintek = [
+    'AI',
 ]
 
 # ТУТ ПОРЯДОК ТИПОВ ДЛЯ ТИПОВ, НАЗВАНИЯ ТИПОВ МЕНЯТЬ НЕ МЕНЯТЬ, НУЖНЫ ПРАВКИ
