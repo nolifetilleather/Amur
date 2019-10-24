@@ -634,14 +634,16 @@ class Position:
                         '.SCMX, .STYP, SYS_LNG.XLNG, .IDVX);\n'
                     )
             txt.write('\n')
-        for sigtype in config.sigtypes_discrete_nm_for_input:
-            if signal.sigtype == sigtype:
-                txt.write(
-                    f'{signal.name}({signal.address}, .CAON, .MBIN, '
-                    'SYS_LNG.XLNG);\n'
-                    f'_IO_{signal.address}.ValueBOOL'
-                    f':=NOT {signal.name}.OXON;\n'
-                    )
+        for sigtype in config.sigtypes_for_nm_output:
+            txt.write(f'// {sigtype}\n')
+            for signal in self.signals_list:
+                if signal.sigtype == sigtype:
+                    txt.write(
+                        f'{signal.name}(_IO_{signal.address}, .CAON, .MBIN, '
+                        'SYS_LNG.XLNG);\n'
+                        f'_IO_{signal.address}.ValueBOOL'
+                        f':=NOT {signal.name}.OXON;\n\n'
+                        )
             txt.write('\n')
 
     # ALARMING
