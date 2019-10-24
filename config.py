@@ -125,7 +125,8 @@ styp_special_discrete_for_input = ['6']
 
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ OUTPUT $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-sigtypes_for_output = ['DO_M', 'DO_NM']
+sigtypes_for_m_output = ['DO_M']
+sigtypes_for_nm_output = ['DO_NM']
 
 # $$$$$$$$$$$$$$$$$$$$$$$$$$$$ ALARMING $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 

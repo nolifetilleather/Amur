@@ -101,7 +101,7 @@ class SignalsList(list):
 
     # OUTPUT
     def contains_signals_for_output(self):
-        return self.has_any_signal_with_sigtype_in(config.sigtypes_for_output)
+        return self.has_any_signal_with_sigtype_in(config.sigtypes_for_m_output)
 
     # ALARMING
     def contains_signals_for_alarming(self):
@@ -299,7 +299,7 @@ class Position:
             tush_addr=None,
             xsy_addr=None,
             mov_addr=None,
-            ai_addr = None
+            ai_addr=None,
     ):
 
         if not isinstance(plc, PLC):
@@ -534,6 +534,7 @@ class Position:
                         f'{signal.plc.reset_position}_CORS.XORS, '
                         f'.IDVX, .IFXX, SYS_LNG.XLNG, {signal.styp});\n'
                     )
+                # BS
                 elif (
                         signal.sigtype in
                         config.sigtypes_special_discrete_m_for_input
@@ -562,7 +563,8 @@ class Position:
                 if signal.sigtype == sigtype:
                     txt.write(
                         f'{signal.name}'
-                        f'({signal.address}, .MBIN, .INVR, SYS_LNG.XLNG);\n'
+                        f'(_IO_{signal.address}, .MBIN, .INVR, '
+                        f'SYS_LNG.XLNG);\n'
                     )
             txt.write('\n')
 
@@ -623,13 +625,22 @@ class Position:
         config.sigtypes_for_output_txt.
         """
         txt.write(f'// {self.name_for_comment}\n')
-        for sigtype in config.sigtypes_for_output:
+        for sigtype in config.sigtypes_for_m_output:
             txt.write(f'// {sigtype}\n')
             for signal in self.signals_list:
                 if signal.sigtype == sigtype:
                     txt.write(
                         f'{signal.name}(.IVXX, .MBIN, .CAON, '
                         '.SCMX, .STYP, SYS_LNG.XLNG, .IDVX);\n'
+                    )
+            txt.write('\n')
+        for sigtype in config.sigtypes_discrete_nm_for_input:
+            if signal.sigtype == sigtype:
+                txt.write(
+                    f'{signal.name}({signal.address}, .CAON, .MBIN, '
+                    'SYS_LNG.XLNG);\n'
+                    f'_IO_{signal.address}.ValueBOOL'
+                    f':=NOT {signal.name}.OXON;\n'
                     )
             txt.write('\n')
 
@@ -734,6 +745,8 @@ class Position:
                 counter = f'{position}_{cntrs_markers[cntr]}_CNT'
                 self.counters_for_sum.append(counter)
                 self.counters.append(counter)
+                bool_counter = f'{position}_{cntrs_markers[cntr]}'
+                self.bool_counters.add(bool_counter)
                 txt.write(f'{counter}:=0;\n')
 
         # c тушением
@@ -746,6 +759,12 @@ class Position:
                         f'{upg_marker}_CNT'
                     )
                     self.counters.append(counter)
+                    bool_counter = (
+                        f'{position}_'
+                        f'{upg_marker}_'
+                        f'{cntrs_markers[cntr]}'
+                    )
+                    self.bool_counters.add(bool_counter)
                     txt.write(f'{counter}:=0;\n')
 
         if len(self.upg_counters) > 0:
@@ -2999,22 +3018,9 @@ class PLC:
     # TO_SAU
     def establishing_to_sau_txt(self):
         if self.ready_for_to_sau():
-
             txt = open(fr'{self.output_path}\To_SAU.txt', 'w')
-
             for position in self.__positions_list:
                 position.to_sau_write_to_txt(txt)
-
-            plc_xsy_signals = [
-                signal for signal in self.__signals_list
-                if signal.sigtype in config.sigtypes_xsy_for_weintek
-            ]
-            for signal in plc_xsy_signals:
-                txt.write(
-                    f'_IO_{signal.address}.ValueBOOL'
-                    f':=NOT {signal.name}.OXON;\n'
-                )
-
             txt.close()
             return True
 
@@ -3052,37 +3058,23 @@ class PLC:
     def __datatable(self, category):
 
         for position in self.__positions_list:
-            if len(position.upg_counters) != 0:
+            for upg_marker in position.upg_markers:
                 bool_counter = \
-                    f'{position.name}UPG_{config.cntrs_dict["Пожары"]}'
+                    f'{position.name}_' \
+                    f'{upg_marker}_' \
+                    f'{config.cntrs_dict["Пожары"]}'
                 position.bool_counters.add(bool_counter)
-            if len(position.xsy_counters) != 0:
-                bool_counter = \
-                    f'{position.name}{config.cntrs_dict["Смежные системы"]}'
-                position.bool_counters.add(bool_counter)
-            for counter in position.counters:
-                for cntr_type in config.cntrs_dict:
-                    cntr_marker = config.cntrs_dict[cntr_type]
-                    if cntr_marker in counter and 'UPG' not in counter:
-                        bool_counter = \
-                            f'{position.name}{cntr_marker}'
-                        position.bool_counters.add(bool_counter)
-                    elif cntr_marker in counter and 'UPG' in counter:
-                        bool_counter = \
-                            f'{position.name}UPG_{cntr_marker}'
-                        position.bool_counters.add(bool_counter)
 
         cors_coof = ['CORS', 'COOF']
 
-        data_len = 0
+        data_len = 1
 
         data_len += len(self.__signals_list)
         data_len += len(self.m_names)
-        data_len += len(cors_coof)*len(self.__positions_list)
+        data_len += len(cors_coof) * len(self.__positions_list)
 
         for position in self.__positions_list:
             data_len += len(position.upg_counters)
-            data_len += len(position.xsy_counters)
             data_len += len(position.counters)
             data_len += len(position.bool_counters)
 
@@ -3118,19 +3110,15 @@ class PLC:
             data['Марка'][i] = \
                 signal.name
             data['Тип Объекта'][i] = \
-                signal.sigtype \
-                if category != 2 \
-                else signal.signal_type_cat2
+                signal.sigtype
             data['Группа событий'][i] = \
                 signal.position.name_for_comment
             data['KKS'][i] = \
                 signal.name[1:].replace('_', '-') \
-                if signal.name[1] == 'P' \
+                if signal.name[0] == 'P' \
                 else signal.name.replace('_', '-')
             data['Шаблон'][i] = \
-                'FB_' + signal.sigtype \
-                if category != 2 \
-                else signal.signal_type_cat2
+                'FB_' + signal.sigtype
             filled += 1
 
         def cnt(counters, pos):
@@ -3176,18 +3164,18 @@ class PLC:
             data['Марка'][i+filled] = \
                 m_name
             data['Тип Объекта'][i+filled] = \
-                'MOPS3a'
+                'Mops3A'
             data['Группа событий'][i+filled] = \
                 self.reset_position_for_comment
             data['Шаблон'][i+filled] = \
-                'MOPS3a'
+                'Mops3A'
         filled += len(self.m_names)
 
         for position in self.__positions_list:
             iteration = 0
             for corscoof in cors_coof:
                 data['Марка'][iteration+filled] = \
-                    f'{position.name}{corscoof}'
+                    f'{position.name}_{corscoof}'
                 data['Тип Объекта'][iteration + filled] = \
                     corscoof
                 data['Группа событий'][iteration + filled] = \
@@ -3220,3 +3208,4 @@ class PLC:
                 self.__datatable(2)
             else:
                 self.__datatable(1)
+            return True

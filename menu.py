@@ -85,12 +85,12 @@ def menu(plc):
                 plc.establishing_diag_st_txt,
                 True,
             ],
-            # [
-            #    'Сформировать таблицу исходных данных',
-            #    plc.ready_for_datatable(),
-            #    plc.establishing_datatable_to_xlsx,
-            #    True,
-            # ],
+            [
+               'Сформировать таблицу исходных данных',
+               plc.ready_for_datatable(),
+               plc.establishing_datatable_to_xlsx,
+               True,
+            ],
             [
                 'Сформировать все доступные для формирования файлы',
                 True,
