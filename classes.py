@@ -2538,19 +2538,6 @@ class PLC:
             f'устройств созданы: {self.devices_diag_signals_created}'
         )
         print()
-        for position in self.__positions_list:
-            print(position.upg_markers)
-        print()
-        for signal in self.__signals_list:
-            print(
-                signal.name,
-                signal.position.name,
-                signal.ff_out,
-                signal.location.fire_fightings_cntrs if
-                signal.location is not None
-                else None,
-                sep=' '
-            )
 
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$$$$$$$$ ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ $$$$$$$$$$$$$$$$$$$$$
