@@ -97,11 +97,15 @@ class SignalsList(list):
 
     # INPUT
     def contains_signals_for_input(self):
-        return self.has_any_signal_with_sigtype_in(config.sigtypes_for_input)
+        return self.has_any_signal_with_sigtype_in(
+            config.sigtypes_for_input
+        )
 
     # OUTPUT
     def contains_signals_for_output(self):
-        return self.has_any_signal_with_sigtype_in(config.sigtypes_for_m_output)
+        return self.has_any_signal_with_sigtype_in(
+            config.sigtypes_for_m_output
+        )
 
     # ALARMING
     def contains_signals_for_alarming(self):
@@ -681,6 +685,8 @@ class Position:
     # COUNTING
     def counting_write_to_txt(self, txt):
 
+        self.upg_markers.sort()
+
         txt.write(f'// {self.name_for_comment}\n')
 
         cntrs_markers = config.cntrs_dict
@@ -1002,6 +1008,7 @@ class Position:
             iteration = 1
             for upg_marker in self.upg_markers:
                 counter = f'{position}_{cntr_marker}_{upg_marker}_CNT'
+                check_counter = f'{position}_XFRX_{upg_marker}_CNT'
 
                 for sigtype in config.sigtypes_for_faults_in_counting:
                     txt.write(f'\n// {sigtype}\n')
@@ -1009,12 +1016,20 @@ class Position:
                         if (
                                 signal.sigtype == sigtype
                                 and
-                                (signal.ff_out is not None
-                                 or
-                                 (isinstance(signal.location, Location)
-                                  and
-                                  signal
-                                  .location.fire_fightings_cntrs is not None))
+                                ((
+                                     signal.ff_out is not None
+                                     and
+                                     any(ff_out == upg_marker for ff_out
+                                         in signal.ff_out)
+                                )
+                                or
+                                (isinstance(signal.location, Location)
+                                 and
+                                 signal
+                                 .location.fire_fightings_cntrs is not None
+                                 and
+                                 (check_counter in
+                                  signal.location.fire_fightings_cntrs)))
                         ):
                             txt.write(
                                 self.counter_one_signal_actuation(
@@ -1037,6 +1052,7 @@ class Position:
             iteration = 1
             for upg_marker in self.upg_markers:
                 counter = f'{position}_{cntr_marker}_{upg_marker}_CNT'
+                check_counter = f'{position}_XFRX_{upg_marker}_CNT'
 
                 for sigtype in config.sigtypes_for_falsities_in_counting:
                     txt.write(f'\n// {sigtype}\n')
@@ -1044,12 +1060,20 @@ class Position:
                         if (
                                 signal.sigtype == sigtype
                                 and
-                                (signal.ff_out is not None
+                                ((
+                                         signal.ff_out is not None
+                                         and
+                                         any(ff_out == upg_marker for ff_out
+                                             in signal.ff_out)
+                                 )
                                  or
                                  (isinstance(signal.location, Location)
                                   and
                                   signal
-                                  .location.fire_fightings_cntrs is not None))
+                                  .location.fire_fightings_cntrs is not None
+                                  and
+                                  check_counter in
+                                  signal.location.fire_fightings_cntrs))
                         ):
                             txt.write(
                                 self.counter_one_signal_actuation(
@@ -1107,11 +1131,14 @@ class Position:
 
             for upg_marker in self.upg_markers:
                 counter = f'{position}_{cntr_marker}_{upg_marker}_CNT'
+                check_counter = f'{position}_XFRX_{upg_marker}_CNT'
                 for location in self.locations_list:
                     if (
                             location.warning_cntr
                             and
                             location.fire_fightings_cntrs is not None
+                            and
+                            check_counter in location.fire_fightings_cntrs
                     ):
                         for signal in location.signals_list:
                             txt.write(
@@ -2511,6 +2538,19 @@ class PLC:
             f'устройств созданы: {self.devices_diag_signals_created}'
         )
         print()
+        for position in self.__positions_list:
+            print(position.upg_markers)
+        print()
+        for signal in self.__signals_list:
+            print(
+                signal.name,
+                signal.position.name,
+                signal.ff_out,
+                signal.location.fire_fightings_cntrs if
+                signal.location is not None
+                else None,
+                sep=' '
+            )
 
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$$$$$$$$ ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ $$$$$$$$$$$$$$$$$$$$$
