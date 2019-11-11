@@ -1560,31 +1560,31 @@ class Device:
         self.s = s
 
     # ВЫЗОВ БЛОКОВ
-    def call_for_mops_mups_text(self):
+    def call_mops_mups_write_to_txt(self, txt):
 
         if self.devtype == 'MOPS':
             args = ''
             for i in range(len(config.mops_args)-1):
                 args += f'.{config.mops_args[i]}, '
             args += f'.{config.mops_args[-1]}'
-            text = f'{self.name}({args});\n'
-            return text
+            result = f'{self.name}({args});\n'
+            txt.write(result)
 
         elif self.devtype == 'MUPS':
             args = ''
             for i in range(len(config.mups_args) - 1):
                 args += f'.{config.mups_args[i]}, '
             args += f'.{config.mups_args[-1]}'
-            text = f'{self.name}({args});\n'
-            return text
+            result = f'{self.name}({args});\n'
+            txt.write(result)
 
         elif self.devtype == 'MOPS3a':
             args = f'_IO_IX{self.input_index}_0_3, '
             for i in range(len(config.mops3a_args) - 1):
                 args += f'{config.mops3a_args[i]}, '
             args += config.mops3a_args[-1]
-            text = f'{self.name}({args});\n'
-            return text
+            result = f'{self.name}({args});\n'
+            txt.write(result)
 
     # ПЕРЕКЛАДЫВАНИЕ
     @staticmethod
@@ -1602,11 +1602,11 @@ class Device:
             result += '\n'
             return result
 
-    def mops_shifting_text(self):
-        return self.__shift(self, 'MOPS', config.mops_args)
+    def mops_shifting_write_to_txt(self, txt):
+        txt.write(self.__shift(self, 'MOPS', config.mops_args))
 
-    def mups_shifting_text(self):
-        return self.__shift(self, 'MUPS', config.mups_args, cnt=4)
+    def mups_shifting_write_to_txt(self, txt):
+        txt.write(self.__shift(self, 'MUPS', config.mups_args, cnt=4))
 
     # IVXX IDVX
     @staticmethod
@@ -1627,11 +1627,11 @@ class Device:
             result += '\n'
             return result
 
-    def mops_ivxx_text(self):
-        return self.__ivxx(self, 'MOPS', config.mops_args)
+    def mops_ivxx_write_to_txt(self, txt):
+        txt.write(self.__ivxx(self, 'MOPS', config.mops_args))
 
-    def mups_ivxx_text(self):
-        return self.__ivxx(self, 'MUPS', config.mups_args)
+    def mups_ivxx_write_to_txt(self, txt):
+        txt.write(self.__ivxx(self, 'MUPS', config.mups_args))
 
     @staticmethod
     def __idvx(device, devtype, args):
@@ -1651,11 +1651,11 @@ class Device:
             result += '\n'
             return result
 
-    def mops_idvx_text(self):
-        return self.__idvx(self, 'MOPS', config.mops_args)
+    def mops_idvx_write_to_txt(self, txt):
+        txt.write(self.__idvx(self, 'MOPS', config.mops_args))
 
-    def mups_idvx_text(self):
-        return self.__idvx(self, 'MUPS', config.mups_args)
+    def mups_idvx_write_to_txt(self, txt):
+        txt.write(self.__idvx(self, 'MUPS', config.mups_args))
 
     # OXON
     def mups_oxon_text(self):
@@ -1677,7 +1677,7 @@ class Device:
             return text
 
     # СБРОС МОСОВ
-    def mops_reset_text(self):
+    def mops_reset_write_to_txt(self, txt):
 
         if self.devtype == 'MOPS':
             result = f'(* {self.name} *)\n'
@@ -1694,7 +1694,7 @@ class Device:
                     result += f'// {args[i]} reserved\n'
 
             result += '\n'
-            return result
+            txt.write(result)
 
     #  МОПСЫ 3а
     def __mops3a_has_any_m(self):
@@ -1720,12 +1720,14 @@ class Device:
     def __m_name_s_f_s(self, first, second):
         return f'M{self.name[5:]}_S_{first}_{second}'
 
-    def mops3a_m_text(self):
+    def mops3a_m_write_to_txt(self, txt):
 
         if self.__mops3a_has_any_m():
 
-            text = f'(* {self.name} *)\n'
-            text += '//Ручные извещатели\n'
+            txt.write(
+                f'(* {self.name} *)\n'
+                '//Ручные извещатели\n'
+            )
             m_index_num = 0
             m_signals_lst = []
 
@@ -1777,18 +1779,18 @@ class Device:
                 arg7 = \
                     f'.TST_CNT'
 
-                text += \
-                    f'{m_name}(' \
-                    f'{arg1}, ' \
-                    f'{arg2}, ' \
-                    f'{arg3}, ' \
-                    f'{arg4}, ' \
-                    f'{arg5}, ' \
-                    f'{arg6}, ' \
+                txt.write(
+                    f'{m_name}('
+                    f'{arg1}, '
+                    f'{arg2}, '
+                    f'{arg3}, '
+                    f'{arg4}, '
+                    f'{arg5}, '
+                    f'{arg6}, '
                     f'{arg7});\n'
+                )
 
-            text += '\n'
-            return text
+            txt.write('\n')
 
     def __mops3a_has_any_s(self):
         if self.devtype == 'MOPS3a':
@@ -1799,13 +1801,14 @@ class Device:
                     break
             return flg
 
-    def mops3a_s_text(self):
+    def mops3a_s_write_to_txt(self, txt):
 
         if self.__mops3a_has_any_s():
 
-            self.__reset_addresses = []
-
-            text = f'(* {self.name} *)\n'
+            txt.write(
+                f'(* {self.name} *)\n'
+                '// Дымовые и тепловые извещатели\n'
+            )
             s_signals_lst = []
 
             for signal in self.signals_list:
@@ -1818,7 +1821,6 @@ class Device:
 
             from math import floor
 
-            text += '// Дымовые и тепловые извещатели\n'
             s_index_num = 0
             prev_addr = None
             prev_m_name = None
@@ -1867,15 +1869,16 @@ class Device:
                     arg7 = \
                         '0'
 
-                    text += \
-                        f'{m_name}(' \
-                        f'{arg1}, ' \
-                        f'{arg2}, ' \
-                        f'{arg3}, ' \
-                        f'{arg4}, ' \
-                        f'{arg5}, ' \
-                        f'{arg6}, ' \
+                    txt.write(
+                        f'{m_name}('
+                        f'{arg1}, '
+                        f'{arg2}, '
+                        f'{arg3}, '
+                        f'{arg4}, '
+                        f'{arg5}, '
+                        f'{arg6}, '
                         f'{arg7});\n'
+                    )
 
                 elif (
                         floor((int(addr) - 1) / 16)
@@ -1902,15 +1905,16 @@ class Device:
                     arg7 = \
                         '0'
 
-                    text += \
-                        f'{m_name}(' \
-                        f'{arg1}, ' \
-                        f'{arg2}, ' \
-                        f'{arg3}, ' \
-                        f'{arg4}, ' \
-                        f'{arg5}, ' \
-                        f'{arg6}, ' \
+                    txt.write(
+                        f'{m_name}('
+                        f'{arg1}, '
+                        f'{arg2}, '
+                        f'{arg3}, '
+                        f'{arg4}, '
+                        f'{arg5}, '
+                        f'{arg6}, '
                         f'{arg7});\n'
+                    )
 
                 else:
 
@@ -1931,35 +1935,34 @@ class Device:
                     arg7 = \
                         f'{prev_m_name}.TST_CNTo'
 
-                    text += \
-                        f'{m_name}(' \
-                        f'{arg1}, ' \
-                        f'{arg2}, ' \
-                        f'{arg3}, ' \
-                        f'{arg4}, ' \
-                        f'{arg5}, ' \
-                        f'{arg6}, ' \
+                    txt.write(
+                        f'{m_name}('
+                        f'{arg1}, '
+                        f'{arg2}, '
+                        f'{arg3}, '
+                        f'{arg4}, '
+                        f'{arg5}, '
+                        f'{arg6}, '
                         f'{arg7});\n'
+                    )
 
                 prev_addr = addr
                 prev_m_name = m_name
 
             self.__reset_addresses.append(prev_addr)
 
-            text += '\n'
-            return text
+            txt.write('\n')
 
     # ТЕСТ/СБРОС МОПСОВ 3А
-    def mops3a_test_reset_text(self):
+    def mops3a_test_reset_write_to_txt(self, txt):
 
         if self.devtype == 'MOPS3a' and self.__reset_addresses is not None:
 
-            text = ''
             first = 1
             second = 16
             cnt = 0
 
-            text += f'(* {self.name} *)\n'
+            txt.write(f'(* {self.name} *)\n')
 
             for addr in self.__reset_addresses:
 
@@ -1977,19 +1980,20 @@ class Device:
                 arg5 = \
                     '.FL'
 
-                text += \
-                    f'{m_name}(' \
-                    f'{arg1}, ' \
-                    f'{arg2}, ' \
-                    f'{arg3}, ' \
-                    f'{arg4}, ' \
+                txt.write(
+                    f'{m_name}('
+                    f'{arg1}, '
+                    f'{arg2}, '
+                    f'{arg3}, '
+                    f'{arg4}, '
                     f'{arg5});\n'
+                )
 
                 cnt += 1
                 first += 16
                 second += 16
 
-            text += '\n'
+            txt.write('\n')
             first = 1
             second = 16
             cnt = 0
@@ -2001,19 +2005,18 @@ class Device:
                 var1 = f'_IO_QX{self.input_index}_1_{78+cnt}.ValueDINT'
                 var2 = f'{m_name}.XTST'
 
-                text += f'{var1}:={var2};\n'
+                txt.write(f'{var1}:={var2};\n')
 
                 var1 = f'_IO_QX{self.input_index}_1_{14 + cnt}.ValueDINT'
                 var2 = f'{m_name}.XRST'
 
-                text += f'{var1}:={var2};\n'
+                txt.write(f'{var1}:={var2};\n')
 
                 first += 16
                 second += 16
                 cnt += 1
 
-            text += '\n'
-            return text
+            txt.write('\n')
 
     @staticmethod
     def __ivxx_xvlx_idvx_dvxx(device, arg1, arg2, styps_lst, ms):
@@ -2042,57 +2045,69 @@ class Device:
         text += '\n'
         return text
 
-    def mops3a_m_ivxx_xvlx_text(self):
+    def mops3a_m_ivxx_xvlx_write_to_txt(self, txt):
         if self.__mops3a_has_any_m():
-            text = f'(* {self.name} *)\n'
-            text += '// Ручные извещатели\n'
-            text += self.__ivxx_xvlx_idvx_dvxx(
-                self,
-                'IVXX',
-                'XVLX',
-                config.styp_for_m_in_mops3a,
-                'M'
+            txt.write(
+                f'(* {self.name} *)\n'
+                '// Ручные извещатели\n'
             )
-            return text
+            txt.write(
+                self.__ivxx_xvlx_idvx_dvxx(
+                    self,
+                    'IVXX',
+                    'XVLX',
+                    config.styp_for_m_in_mops3a,
+                    'M'
+                )
+            )
 
-    def mops3a_s_ivxx_xvlx_text(self):
+    def mops3a_s_ivxx_xvlx_write_to_txt(self, txt):
         if self.__mops3a_has_any_s():
-            text = f'(* {self.name} *)\n'
-            text += '// Дымовые и тепловые извещатели\n'
-            text += self.__ivxx_xvlx_idvx_dvxx(
-                self,
-                'IVXX',
-                'XVLX',
-                config.styp_for_s_in_mops3a,
-                'S',
+            txt.write(
+                f'(* {self.name} *)\n'
+                '// Дымовые и тепловые извещатели\n'
             )
-            return text
+            txt.write(
+                self.__ivxx_xvlx_idvx_dvxx(
+                    self,
+                    'IVXX',
+                    'XVLX',
+                    config.styp_for_s_in_mops3a,
+                    'S',
+                )
+            )
 
-    def mops3a_m_idvx_dvxx_text(self):
+    def mops3a_m_idvx_dvxx_write_to_txt(self, txt):
         if self.__mops3a_has_any_m():
-            text = f'(* {self.name} *)\n'
-            text += '// Ручные извещатели\n'
-            text += self.__ivxx_xvlx_idvx_dvxx(
-                self,
-                'IDVX',
-                'DVXX',
-                config.styp_for_m_in_mops3a,
-                'M',
+            txt.write(
+                f'(* {self.name} *)\n'
+                '// Ручные извещатели\n'
             )
-            return text
+            txt.write(
+                self.__ivxx_xvlx_idvx_dvxx(
+                    self,
+                    'IDVX',
+                    'DVXX',
+                    config.styp_for_m_in_mops3a,
+                    'M',
+                )
+            )
 
-    def mops3a_s_idvx_dvxx_text(self):
+    def mops3a_s_idvx_dvxx_write_to_txt(self, txt):
         if self.__mops3a_has_any_s():
-            text = f'(* {self.name} *)\n'
-            text += '// Дымовые и тепловые извещатели\n'
-            text += self.__ivxx_xvlx_idvx_dvxx(
-                self,
-                'IDVX',
-                'DVXX',
-                config.styp_for_s_in_mops3a,
-                'S',
+            txt.write(
+                f'(* {self.name} *)\n'
+                '// Дымовые и тепловые извещатели\n'
             )
-            return text
+            txt.write(
+                self.__ivxx_xvlx_idvx_dvxx(
+                    self,
+                    'IDVX',
+                    'DVXX',
+                    config.styp_for_s_in_mops3a,
+                    'S',
+                )
+            )
 
 
 class PLC:
@@ -2866,7 +2881,7 @@ class PLC:
             # $$$$$$$$$$$$$$$$$$$ ВЫЗОВ БЛОКОВ $$$$$$$$$$$$$$$$$$
             txt.write('// Вызов блоков\n')
             for device in self.__devices_list:
-                txt.write(device.call_for_mops_mups_text())
+                device.call_mops_mups_write_to_txt(txt)
 
             # $$$$$$$$$$$$ ПЕРЕКЛАДЫВАНИЕ МОПС/МУПС $$$$$$$$$$$$$
             txt.write(
@@ -2879,12 +2894,10 @@ class PLC:
             )
             # МОПСЫ
             for device in self.__devices_list:
-                if device.mops_shifting_text() is not None:
-                    txt.write(device.mops_shifting_text())
+                device.mops_shifting_write_to_txt(txt)
             # МУПСЫ
             for device in self.__devices_list:
-                if device.mups_shifting_text() is not None:
-                    txt.write(device.mups_shifting_text())
+                device.mups_shifting_write_to_txt(txt)
 
             # $$$$$$$$$$$$$$$$$$$$$$ IVXX $$$$$$$$$$$$$$$$$$$$$$$
             txt.write(
@@ -2893,12 +2906,10 @@ class PLC:
             )
             # МОПСЫ
             for device in self.__devices_list:
-                if device.mops_ivxx_text() is not None:
-                    txt.write(device.mops_ivxx_text())
+                device.mops_ivxx_write_to_txt(txt)
             # МУПСЫ
             for device in self.__devices_list:
-                if device.mups_ivxx_text() is not None:
-                    txt.write(device.mups_ivxx_text())
+                device.mups_ivxx_write_to_txt(txt)
 
             # $$$$$$$$$$$$$$$$$$$$$$ IDVX $$$$$$$$$$$$$$$$$$$$$$$
             txt.write(
@@ -2907,51 +2918,42 @@ class PLC:
             )
             # МОПСЫ
             for device in self.__devices_list:
-                if device.mops_idvx_text() is not None:
-                    txt.write(device.mops_idvx_text())
+                device.mops_idvx_write_to_txt(txt)
             # МУПСЫ
             for device in self.__devices_list:
-                if device.mups_idvx_text() is not None:
-                    txt.write(device.mups_idvx_text())
+                device.mups_idvx_write_to_txt(txt)
 
             # $$$$$$$$$$$$$$$$$$ СБРОС МОПСОВ $$$$$$$$$$$$$$$$$$$
             txt.write('// Сброс мопсов\n')
             for device in self.__devices_list:
-                if device.mops_reset_text() is not None:
-                    txt.write(device.mops_reset_text())
+                device.mops_reset_write_to_txt(txt)
 
             #  МОПСЫ 3а
             if self.__contains_devtype_in_devices_list('MOPS3a'):
                 for device in self.__devices_list:
-                    if device.mops3a_m_text() is not None:
-                        txt.write(device.mops3a_m_text())
-                    if device.mops3a_s_text() is not None:
-                        txt.write(device.mops3a_s_text())
+                    device.mops3a_m_write_to_txt(txt)
+                    device.mops3a_s_write_to_txt(txt)
 
                 txt.write('// Тест и сброс извещателей\n')
                 for device in self.__devices_list:
-                    if device.mops3a_test_reset_text() is not None:
-                        txt.write(device.mops3a_test_reset_text())
+                    device.mops3a_test_reset_write_to_txt(txt)
 
                 txt.write(
                     '// Перекладываем данные с выходов МОПС3А'
                     ' в входные переменные ФБ извещателя\n\n'
                 )
                 for device in self.__devices_list:
-                    if device.mops3a_m_ivxx_xvlx_text() is not None:
-                        txt.write(device.mops3a_m_ivxx_xvlx_text())
-                    if device.mops3a_s_idvx_dvxx_text() is not None:
-                        txt.write(device.mops3a_s_ivxx_xvlx_text())
+                    device.mops3a_m_ivxx_xvlx_write_to_txt(txt)
+                    device.mops3a_s_idvx_dvxx_write_to_txt(txt)
 
                 txt.write(
                     '//Формируем сигнал Недостоверность шлейфа '
                     'по исчезновению связи с МОПС3А\n\n'
                 )
                 for device in self.__devices_list:
-                    if device.mops3a_m_idvx_dvxx_text() is not None:
-                        txt.write(device.mops3a_m_idvx_dvxx_text())
-                    if device.mops3a_s_idvx_dvxx_text() is not None:
-                        txt.write(device.mops3a_s_idvx_dvxx_text())
+                    device.mops3a_m_idvx_dvxx_write_to_txt(txt)
+                    device.mops3a_s_idvx_dvxx_write_to_txt(txt)
+
             txt.close()
             self.__mops_mups_was_formed = True
             return True

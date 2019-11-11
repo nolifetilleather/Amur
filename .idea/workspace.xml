@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="b0d58460-8562-4782-ab0b-cb67160fc23b" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/classes.py" beforeDir="false" afterPath="$PROJECT_DIR$/classes.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -23,8 +22,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/classes.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-8936">
-              <caret line="1167" column="13" lean-forward="true" selection-start-line="1167" selection-start-column="13" selection-end-line="1167" selection-end-column="13" />
+            <state relative-caret-position="554">
+              <caret line="2959" lean-forward="true" selection-start-line="2959" selection-end-line="2959" />
             </state>
           </provider>
         </entry>
@@ -278,19 +277,19 @@
       <workItem from="1573041868282" duration="3630000" />
       <workItem from="1573046433121" duration="51000" />
       <workItem from="1573212134497" duration="5933000" />
-      <workItem from="1573451015962" duration="1509000" />
+      <workItem from="1573451015962" duration="9726000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="296019000" />
+    <option name="totallyTimeSpent" value="304236000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="54" y="-8" width="1556" height="917" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" sideWeight="0.32279316" weight="0.26737967" />
-      <window_info id="Structure" order="1" sideWeight="0.6772069" side_tool="true" visible="true" weight="0.32085562" />
+      <window_info active="true" id="Structure" order="1" sideWeight="0.6772069" side_tool="true" visible="true" weight="0.32085562" />
       <window_info id="Favorites" order="2" side_tool="true" weight="0.32954547" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32806325" />
@@ -420,8 +419,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/classes.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-8936">
-          <caret line="1167" column="13" lean-forward="true" selection-start-line="1167" selection-start-column="13" selection-end-line="1167" selection-end-column="13" />
+        <state relative-caret-position="554">
+          <caret line="2959" lean-forward="true" selection-start-line="2959" selection-end-line="2959" />
         </state>
       </provider>
     </entry>
