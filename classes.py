@@ -1008,7 +1008,9 @@ class Position:
             iteration = 1
             for upg_marker in self.upg_markers:
                 counter = f'{position}_{cntr_marker}_{upg_marker}_CNT'
-                check_counter = f'{position}_XFRX_{upg_marker}_CNT'
+                check_counter = (
+                    f'{position}_{cntrs_markers["Пожары"]}_{upg_marker}_CNT'
+                )
 
                 for sigtype in config.sigtypes_for_faults_in_counting:
                     txt.write(f'\n// {sigtype}\n')
@@ -1052,7 +1054,9 @@ class Position:
             iteration = 1
             for upg_marker in self.upg_markers:
                 counter = f'{position}_{cntr_marker}_{upg_marker}_CNT'
-                check_counter = f'{position}_XFRX_{upg_marker}_CNT'
+                check_counter = (
+                    f'{position}_{cntrs_markers["Пожары"]}_{upg_marker}_CNT'
+                )
 
                 for sigtype in config.sigtypes_for_falsities_in_counting:
                     txt.write(f'\n// {sigtype}\n')
@@ -1131,7 +1135,9 @@ class Position:
 
             for upg_marker in self.upg_markers:
                 counter = f'{position}_{cntr_marker}_{upg_marker}_CNT'
-                check_counter = f'{position}_XFRX_{upg_marker}_CNT'
+                check_counter = (
+                    f'{position}_{cntrs_markers["Пожары"]}_{upg_marker}_CNT'
+                )
                 for location in self.locations_list:
                     if (
                             location.warning_cntr
@@ -1152,7 +1158,6 @@ class Position:
         # СЧЕТЧИКИ РЕЖИМА
         for upg_marker in self.upg_markers:
             txt.write(
-
                 '\n// Счетчик режима "Идет отсчет до начала тушения"\n'
                 '{0}_XRFD_CNT:=Count({0}_{1}.XFDN, {0}_XRFD_CNT);\n\n'
                 .format(position, upg_marker)
@@ -2537,7 +2542,6 @@ class PLC:
             f'Экземпляры сигналов диагностики '
             f'устройств созданы: {self.devices_diag_signals_created}'
         )
-        print()
 
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$$$$$$$$ ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ $$$$$$$$$$$$$$$$$$$$$
