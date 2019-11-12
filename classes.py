@@ -454,7 +454,7 @@ class Position:
         """
         Возвращет True если в списке locations_list
         есть экземпляр Location атрибут .warning_cntr
-        которого == True.
+        которого is True.
         Если такого экземпляра нет - возвращает False.
         """
         return (
@@ -694,7 +694,7 @@ class Position:
 
         signals_for_counting = SignalsList(
             signal for signal in self.signals_list
-            if signal.location != self.plc.exceptions_location
+            if signal.location is not self.plc.exceptions_location
         )
 
         # СЛОВАРИ НАЛИЧИЯ СЧЕТЧИКОВ НА ПОЗИЦИИ
@@ -979,8 +979,8 @@ class Position:
         if cntrs_without_ff['Внимания']:
 
             txt.write('\n// Внимания (сигналы без тушения)\n')
-            cntr_marker = cntrs_markers['Внимания']
-            counter = f'{position}_{cntrs_markers["Пожары"]}_CNT'
+            cntr_marker = cntrs_markers['Пожары']
+            counter = f'{position}_{cntrs_markers["Внимания"]}_CNT'
 
             for location in self.locations_list:
                 if (
@@ -1131,10 +1131,13 @@ class Position:
         if cntrs_with_ff['Внимания']:
 
             txt.write('\n// Внимания (сигналы с тушением)\n')
-            cntr_marker = cntrs_markers['Внимания']
+            cntr_marker = cntrs_markers['Пожары']
 
             for upg_marker in self.upg_markers:
                 counter = (
+                    f'{position}_{cntrs_markers["Внимания"]}_{upg_marker}_CNT'
+                )
+                check_counter = (
                     f'{position}_{cntrs_markers["Пожары"]}_{upg_marker}_CNT'
                 )
                 for location in self.locations_list:
@@ -1143,7 +1146,7 @@ class Position:
                             and
                             location.fire_fightings_cntrs is not None
                             and
-                            counter in location.fire_fightings_cntrs
+                            check_counter in location.fire_fightings_cntrs
                     ):
                         for signal in location.signals_list:
                             txt.write(
