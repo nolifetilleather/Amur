@@ -980,7 +980,7 @@ class Position:
 
             txt.write('\n// Внимания (сигналы без тушения)\n')
             cntr_marker = cntrs_markers['Внимания']
-            counter = f'{position}_{cntr_marker}_CNT'
+            counter = f'{position}_{cntrs_markers["Пожары"]}_CNT'
 
             for location in self.locations_list:
                 if (
@@ -1134,8 +1134,7 @@ class Position:
             cntr_marker = cntrs_markers['Внимания']
 
             for upg_marker in self.upg_markers:
-                counter = f'{position}_{cntr_marker}_{upg_marker}_CNT'
-                check_counter = (
+                counter = (
                     f'{position}_{cntrs_markers["Пожары"]}_{upg_marker}_CNT'
                 )
                 for location in self.locations_list:
@@ -1144,7 +1143,7 @@ class Position:
                             and
                             location.fire_fightings_cntrs is not None
                             and
-                            check_counter in location.fire_fightings_cntrs
+                            counter in location.fire_fightings_cntrs
                     ):
                         for signal in location.signals_list:
                             txt.write(
