@@ -1551,7 +1551,7 @@ class Device:
             )
 
         self.signals_list = []
-        self.__reset_addresses = None
+        self.__reset_addresses = []
 
         self.plc = plc
         self.name = name
@@ -1605,10 +1605,12 @@ class Device:
             return result
 
     def mops_shifting_write_to_txt(self, txt):
-        txt.write(self.__shift(self, 'MOPS', config.mops_args))
+        if self.__shift(self, 'MOPS', config.mops_args) is not None:
+            txt.write(self.__shift(self, 'MOPS', config.mops_args))
 
     def mups_shifting_write_to_txt(self, txt):
-        txt.write(self.__shift(self, 'MUPS', config.mups_args, cnt=4))
+        if self.__shift(self, 'MUPS', config.mups_args, cnt=4) is not None:
+            txt.write(self.__shift(self, 'MUPS', config.mups_args, cnt=4))
 
     # IVXX IDVX
     @staticmethod
@@ -1630,10 +1632,12 @@ class Device:
             return result
 
     def mops_ivxx_write_to_txt(self, txt):
-        txt.write(self.__ivxx(self, 'MOPS', config.mops_args))
+        if self.__ivxx(self, 'MOPS', config.mops_args) is not None:
+            txt.write(self.__ivxx(self, 'MOPS', config.mops_args))
 
     def mups_ivxx_write_to_txt(self, txt):
-        txt.write(self.__ivxx(self, 'MUPS', config.mups_args))
+        if self.__ivxx(self, 'MUPS', config.mups_args) is not None:
+            txt.write(self.__ivxx(self, 'MUPS', config.mups_args))
 
     @staticmethod
     def __idvx(device, devtype, args):
@@ -1654,10 +1658,12 @@ class Device:
             return result
 
     def mops_idvx_write_to_txt(self, txt):
-        txt.write(self.__idvx(self, 'MOPS', config.mops_args))
+        if self.__idvx(self, 'MOPS', config.mops_args) is not None:
+            txt.write(self.__idvx(self, 'MOPS', config.mops_args))
 
     def mups_idvx_write_to_txt(self, txt):
-        txt.write(self.__idvx(self, 'MUPS', config.mups_args))
+        if self.__idvx(self, 'MUPS', config.mups_args) is not None:
+            txt.write(self.__idvx(self, 'MUPS', config.mups_args))
 
     # OXON
     def mups_oxon_text(self):
@@ -2763,8 +2769,9 @@ class PLC:
                                 dct[sigtype],
                             )
                         )
+                txt.write('\n')
 
-            txt.write('\n// Недостоверности КСПА\n')
+            txt.write('// Недостоверности КСПА\n')
             falsities_cab_counter = (
                 f'{self.reset_position}_CAB_{falsities_cntr_marker}_CNT'
             )
