@@ -55,7 +55,7 @@ def read():
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
     # сохрание множества имен всех позиций на этом контроллере
-    positions = set()
+    positions = []
     for i in range(len(input_frame)):
         string_number = str(i+2)
         if (
@@ -71,12 +71,16 @@ def read():
                 f'при заполненной строке {string_number}\n столбца Signal.'
                 'Проверьте входные данные.\n'
             )
-        elif input_frame['Position'][i].replace(' ', '') != '':
-            positions.add(input_frame['Position'][i])
+        elif (
+                input_frame['Position'][i].replace(' ', '') != ''
+                and
+                input_frame['Position'][i] not in positions
+        ):
+            positions.append(input_frame['Position'][i])
 
     # отсортируем имена позиций
-    positions = list(positions)
-    positions.sort()
+    # positions = list(positions)
+    # positions.sort()
 
     # создадим объекты позиций, сохраним ссылки на них
     for position_name in positions:
@@ -163,12 +167,12 @@ def read():
                 # ссылки на экземпляры Position и Location к которым
                 # относится сигнал
                 position=Position.format_position_name(
-                    (input_frame['Position'][i])
-                )
-                if input_frame['Sigtype'][i]
-                not in
-                config.sigtypes_diag_for_weintek
-                else plc.diag_position,
+                    input_frame['Position'][i]
+                ),
+                # if input_frame['Sigtype'][i]
+                # not in
+                # config.sigtypes_diag_for_weintek
+                # else input_frame['Position'][i],
 
                 location=input_frame['Location'][i]
                 if input_frame['Location'][i] != ''
@@ -449,6 +453,10 @@ def read():
                     name=input_frame['Devices'][i],
 
                     devtype=devtype,
+
+                    cabinet=Position.format_position_name(
+                        input_frame['Cabinet'][i]
+                    ),
 
                     input_index=input_frame['Input_Index'][i],
 

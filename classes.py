@@ -491,6 +491,12 @@ class Position:
             for location in self.locations_list
         )
 
+    def is_diag(self):
+        return not any(
+            signal.sigtype not in config.sigtypes_diag_for_weintek
+            for signal in self.signals_list
+        )
+
     def contains_locations_with_fire(self):
         """
         Возвращет True если в списке locations_list
@@ -1536,6 +1542,7 @@ class Device:
             plc,
             name,
             devtype,
+            cabinet,
             input_index,
             output_index=None,
             m=None,
@@ -1556,6 +1563,7 @@ class Device:
         self.plc = plc
         self.name = name
         self.devtype = devtype
+        self.cabinet = cabinet
         self.input_index = input_index
         self.output_index = output_index
         self.m = m
@@ -2146,7 +2154,7 @@ class PLC:
         self.__locations_list = []
         self.__positions_list = []
         self.__devices_list = []
-        self.diag_position = Position(name='Diag_Position', plc=self)
+        # self.diag_position = Position(name='Diag_Position', plc=self)
 
         self.exceptions_location = None
 
@@ -2519,12 +2527,19 @@ class PLC:
             'MUPS': 'Mups3',
         }
         for device in self.__devices_list:
+
             signal = Signal(
                 name=device.name,
                 plc=self,
                 sigtype=d[device.devtype],
-                position=self.diag_position,
+                position=device.cabinet,
             )
+
+            for position in self.__positions_list:
+                if position.name == signal.position:
+                    signal.position = position
+                    position.signals_list.append(signal)
+
             self.append_signal(signal)
 
     def input_data_reformation(self):
@@ -2540,6 +2555,22 @@ class PLC:
         if self.signals_list_filled:
             self.__fill_positions_signals_lists()
             self.signals_reformed = True
+            # отсортируем позиции
+
+            not_diag_positions = [
+                position for position in self.__positions_list
+                if not position.is_diag()
+            ]
+
+            diag_positions = [
+                position for position in self.__positions_list
+                if position.is_diag()
+            ]
+
+            not_diag_positions.sort(
+                key=lambda position: position.name_for_comment
+            )
+            self.__positions_list = not_diag_positions + diag_positions
 
             if self.ce_locations_filled:
                 self.__fill_locations_signals_lists_and_position()
@@ -2551,6 +2582,14 @@ class PLC:
                 self.devices_reformed = True
                 self.__create_devices_diag_signals()
                 self.devices_diag_signals_created = True
+
+        """
+        for position in self.__positions_list:
+            if position.is_diag():
+                print(position.name_for_comment)
+                for signal in position.signals_list:
+                    print(signal.name)
+        """
 
         print(
             'Атрибуты экземпляров сигналов заполнены по словарю, '
@@ -3026,39 +3065,69 @@ class PLC:
             if self.diag_addr != '':
                 txt.write('// Диагностика\n')
                 n = 0
+
+                diag_positions = [
+                    position for position in self.__positions_list
+                    if position.is_diag()
+                ]
+
                 for sigtype in config.sigtypes_diag_for_weintek:
-                    for signal in self.__signals_list:
-                        if signal.sigtype == sigtype:
-                            if sigtype == 'DIAG_DI':
-                                txt.write(
-                                    '_IO_QX{0}_1_{2}:={1}.XVLX;\n'
-                                    '_IO_QX{0}_1_{3}:={1}.DVXX;\n'.format(
-                                        self.coil,
-                                        signal.name,
-                                        int(self.diag_addr)+1+n,
-                                        int(self.diag_addr)+2+n,
+                    if sigtype == 'DIAG_DI':
+                        txt.write(f'// {sigtype}\n')
+                        for position in diag_positions:
+                            txt.write(f'// {position.name_for_comment}\n')
+                            for signal in position.signals_list:
+                                if signal.sigtype == sigtype:
+
+                                    txt.write(
+                                        '_IO_QX{0}_1_{2}:={1}.XVLX;\n'
+                                        '_IO_QX{0}_1_{3}:={1}.DVXX;\n'.format(
+                                            self.coil,
+                                            signal.name,
+                                            int(self.diag_addr)+1+n,
+                                            int(self.diag_addr)+2+n,
+                                        )
                                     )
-                                )
-                                n += 2
-                            elif sigtype == 'DIAG_Mod':
-                                txt.write(
-                                    '_IO_QX{0}_1_{2}:={1}.FXXX;\n'.format(
-                                        self.coil,
-                                        signal.name,
-                                        int(self.diag_addr) + 1 + n,
+                                    n += 2
+
+                            txt.write('\n')
+
+                    elif sigtype == 'DIAG_Mod':
+                        txt.write(f'// {sigtype}\n')
+                        for position in diag_positions:
+                            txt.write(f'// {position.name_for_comment}\n')
+                            for signal in position.signals_list:
+                                if signal.sigtype == sigtype:
+
+                                    txt.write(
+                                        '_IO_QX{0}_1_{2}:={1}.FXXX;\n'.format(
+                                            self.coil,
+                                            signal.name,
+                                            int(self.diag_addr) + 1 + n,
+                                        )
                                     )
-                                )
-                                n += 1
-                            elif sigtype in ['Mops3', 'Mups3', 'Mops3A']:
-                                txt.write(
-                                    '_IO_QX{0}_1_{2}:={1}.DVXX;\n'.format(
-                                        self.coil,
-                                        signal.name,
-                                        int(self.diag_addr) + 1 + n,
+                                    n += 1
+
+                            txt.write('\n')
+
+                    elif sigtype in ['Mops3', 'Mups3', 'Mops3A']:
+                        txt.write(f'// {sigtype}\n')
+                        for position in diag_positions:
+                            txt.write(f'// {position.name_for_comment}\n')
+                            for signal in position.signals_list:
+                                if signal.sigtype == sigtype:
+
+                                    txt.write(
+                                        '_IO_QX{0}_1_{2}:={1}.DVXX;\n'.format(
+                                            self.coil,
+                                            signal.name,
+                                            int(self.diag_addr) + 1 + n,
+                                        )
                                     )
-                                )
-                                n += 1
-                    txt.write('\n')
+                                    n += 1
+
+                            txt.write('\n')
+
             txt.close()
             return True
 
@@ -3074,29 +3143,40 @@ class PLC:
     # DIAG
     def establishing_diag_txt(self):
         if self.ready_for_diag():
+
             txt = open(fr'{self.output_path}\Diag.txt', 'w')
 
-            diag_di = [signal for signal in self.__signals_list
-                       if signal.sigtype in config.sigtypes_di_for_diag]
+            for position in self.__positions_list:
+                if position.is_diag():
+                    txt.write(
+                        f'// {position.name_for_comment}\n'
+                    )
+                    diag_di = [
+                        signal for signal in position.signals_list
+                        if signal.sigtype in config.sigtypes_di_for_diag
+                    ]
 
-            diag_modules = [
-                signal for signal in self.__signals_list
-                if signal.sigtype in config.sigtypes_modules_for_types
-            ]
+                    diag_modules = [
+                        signal for signal in position.signals_list
+                        if signal.sigtype in config.sigtypes_modules_for_types
+                    ]
 
-            for signal in diag_di:
-                txt.write(
-                    f'{signal.name}(_IO_{signal.address}, SYS_LNG.XLNG);\n'
-                )
-            if len(diag_di) != 0:
-                txt.write('\n')
+                    for signal in diag_di:
+                        txt.write(
+                            f'{signal.name}(_IO_{signal.address}, '
+                            f'SYS_LNG.XLNG);\n'
+                        )
 
-            for signal in diag_modules:
-                txt.write(
-                    f'{signal.name}(_IO_{signal.address}.Status);\n'
-                )
-            if len(diag_modules) != 0:
-                txt.write('\n')
+                    if len(diag_di) != 0:
+                        txt.write('\n')
+
+                    for signal in diag_modules:
+                        txt.write(
+                            f'{signal.name}(_IO_{signal.address}.Status);\n'
+                        )
+
+                    if len(diag_modules) != 0:
+                        txt.write('\n')
 
             txt.close()
             return True
