@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="b0d58460-8562-4782-ab0b-cb67160fc23b" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classes.py" beforeDir="false" afterPath="$PROJECT_DIR$/classes.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/read_input.py" beforeDir="false" afterPath="$PROJECT_DIR$/read_input.py" afterDir="false" />
-    </list>
+    <list default="true" id="b0d58460-8562-4782-ab0b-cb67160fc23b" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,11 +31,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/classes.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="245">
-              <caret line="2570" column="62" selection-start-line="2570" selection-start-column="62" selection-end-line="2570" selection-end-column="62" />
+            <state relative-caret-position="232">
+              <caret line="2521" column="8" selection-start-line="2521" selection-start-column="8" selection-end-line="2521" selection-end-column="8" />
             </state>
           </provider>
         </entry>
@@ -65,7 +61,7 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/read_input.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="130">
@@ -309,22 +305,22 @@
       <workItem from="1573796658323" duration="1174000" />
       <workItem from="1573798417396" duration="3465000" />
       <workItem from="1573804401164" duration="10785000" />
-      <workItem from="1574056974058" duration="9530000" />
+      <workItem from="1574056974058" duration="9780000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="349824000" />
+    <option name="totallyTimeSpent" value="350074000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="54" y="-8" width="1556" height="917" extended-state="6" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" sideWeight="0.32279316" weight="0.26737967" />
-      <window_info id="Structure" order="1" sideWeight="0.6772069" side_tool="true" visible="true" weight="0.29010695" />
+      <window_info active="true" id="Structure" order="1" sideWeight="0.6772069" side_tool="true" visible="true" weight="0.29010695" />
       <window_info id="Favorites" order="2" side_tool="true" weight="0.32954547" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32806325" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.314888" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.314888" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.3992095" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -441,17 +437,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/classes.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="245">
-          <caret line="2570" column="62" selection-start-line="2570" selection-start-column="62" selection-end-line="2570" selection-end-column="62" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/read_input.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="130">
           <caret line="80" column="31" lean-forward="true" selection-start-line="80" selection-start-column="31" selection-end-line="80" selection-end-column="31" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/classes.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="232">
+          <caret line="2521" column="8" selection-start-line="2521" selection-start-column="8" selection-end-line="2521" selection-end-column="8" />
         </state>
       </provider>
     </entry>
