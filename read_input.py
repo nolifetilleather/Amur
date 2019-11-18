@@ -62,8 +62,6 @@ def read():
             input_frame['Position'][i].replace(' ', '') == ''
             and
             input_frame['Signal'][i].replace(' ', '') != ''
-            and
-            input_frame['Sigtype'][i] not in config.sigtypes_diag_for_weintek
         ):
             # ошибка при отсутствии заполнения позиции для сигнала
             raise ValueError(
