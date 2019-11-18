@@ -1666,23 +1666,27 @@ class Device:
             txt.write(self.__idvx(self, 'MUPS', config.mups_args))
 
     # OXON
-    def mups_oxon_text(self):
+    def mups_oxon_write_to_txt(self, txt):
 
         if self.devtype == 'MUPS':
-            text = f'(* {self.name} *)\n'
+            txt.write(
+                f'(* {self.name} *)\n'
+            )
             for i in range(len(config.mups_args)):
 
                 if isinstance(self.signals_list[i], Signal):
                     signal_name = self.signals_list[i].name
-                    text += \
-                        f'_IO_QX{self.output_index}_1_{i}:=' \
+                    txt.write(
+                        f'_IO_QX{self.output_index}_1_{i}:='
                         f'{signal_name}.OXON;\n'
+                    )
 
                 elif self.signals_list[i] == '0':
-                    text += f'// {config.mups_args[i]} reserved\n'
+                    txt.write(
+                        f'// {config.mups_args[i]} reserved\n'
+                    )
 
-            text += '\n'
-            return text
+            txt.write('\n')
 
     # СБРОС МОСОВ
     def mops_reset_write_to_txt(self, txt):
@@ -3000,8 +3004,7 @@ class PLC:
         if self.ready_for_oxon():
             txt = open(fr'{self.output_path}\Oxon.txt', 'w')
             for device in self.__devices_list:
-                if device.mups_oxon_text() is not None:
-                    txt.write(device.mups_oxon_text())
+                device.mups_oxon_write_to_txt(txt)
             txt.close()
             return True
 
