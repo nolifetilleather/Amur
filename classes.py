@@ -235,10 +235,10 @@ class SignalsList(list):
                 for signal in self)
         )
 
-    # DIAG_ST
-    def contains_signals_for_diag_st(self):
+    # DIAG
+    def contains_signals_for_diag(self):
         return self.has_any_signal_with_sigtype_in(
-            config.sigtypes_for_diag_st
+            config.sigtypes_for_diag
         )
 
 
@@ -1170,7 +1170,7 @@ class Position:
             )
 
         # ОБЩИЕ СЧЕТЧИКИ
-        txt.write('\n//Общие счетчики\n')
+        txt.write('\n// Общие счетчики\n')
 
         for upg_marker in self.upg_markers:
             txt.write(
@@ -2664,9 +2664,9 @@ class PLC:
     def ready_for_to_sau(self):
         return self.__signals_list.contains_signals_for_to_sau()
 
-    # DIAG_ST
-    def ready_for_diag_st(self):
-        return self.__signals_list.contains_signals_for_diag_st()
+    # DIAG
+    def ready_for_diag(self):
+        return self.__signals_list.contains_signals_for_diag()
 
     # DATATABLE
     def ready_for_datatable(self):
@@ -3061,31 +3061,31 @@ class PLC:
             txt.close()
             return True
 
-    # DIAG_ST
-    def establishing_diag_st_txt(self):
-        if self.ready_for_diag_st():
-            txt = open(fr'{self.output_path}\Diag_ST.txt', 'w')
+    # DIAG
+    def establishing_diag_txt(self):
+        if self.ready_for_diag():
+            txt = open(fr'{self.output_path}\Diag.txt', 'w')
 
-            diag_st_di = [signal for signal in self.__signals_list
-                          if signal.sigtype in config.sigtypes_di_for_diag_st]
+            diag_di = [signal for signal in self.__signals_list
+                       if signal.sigtype in config.sigtypes_di_for_diag]
 
-            diag_st_modules = [
+            diag_modules = [
                 signal for signal in self.__signals_list
                 if signal.sigtype in config.sigtypes_modules_for_types
             ]
 
-            for signal in diag_st_di:
+            for signal in diag_di:
                 txt.write(
                     f'{signal.name}(_IO_{signal.address}, SYS_LNG.XLNG);\n'
                 )
-            if len(diag_st_di) != 0:
+            if len(diag_di) != 0:
                 txt.write('\n')
 
-            for signal in diag_st_modules:
+            for signal in diag_modules:
                 txt.write(
                     f'{signal.name}(_IO_{signal.address}.Status);\n'
                 )
-            if len(diag_st_modules) != 0:
+            if len(diag_modules) != 0:
                 txt.write('\n')
 
             txt.close()

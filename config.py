@@ -275,13 +275,13 @@ sigtypes_for_to_sau = [
     'DO_NM',
 ]
 
-# $$$$$$$$$$$$$$$$$$$$$$$$$$$$$ DIAG_ST $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+# $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ DIAG $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-sigtypes_for_diag_st = [
+sigtypes_for_diag = [
     'DIAG_DI',
     'DIAG_Mod',
 ]
-sigtypes_di_for_diag_st = [
+sigtypes_di_for_diag = [
     'DIAG_DI',
 ]
 sigtypes_modules_for_types = [

@@ -80,9 +80,9 @@ def menu(plc):
                 True,
             ],
             [
-                'Сформировать Diag_ST.txt',
-                plc.ready_for_diag_st(),
-                plc.establishing_diag_st_txt,
+                'Сформировать Diag.txt',
+                plc.ready_for_diag(),
+                plc.establishing_diag_txt,
                 True,
             ],
             [
