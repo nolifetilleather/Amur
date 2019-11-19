@@ -492,7 +492,7 @@ class Position:
         )
 
     def is_diag(self):
-        return not any(
+        return any(
             signal.sigtype not in config.sigtypes_diag_for_weintek
             for signal in self.signals_list
         )
@@ -1499,19 +1499,53 @@ class Position:
                 any(signal.sigtype in config.sigtypes_xsy_for_weintek
                     for signal in self.signals_list)
         ):
-            txt.write('// Передача XSY\n')
-            txt.write(f'(* {self.name_for_comment} *)\n')
+
             i = 0
-            for signal in self.signals_list:
-                for location in self.locations_list:
-                    if signal.styp == location.name:
-                        txt.write(
-                            f'_IO_QX{self.plc.coil}_1_'
-                            f'{int(self.xsy_addr) + i}:='
-                            f'{signal.name}.OXON;\n'
-                        )
-                        i += 1
-            txt.write('\n')
+
+            # DO_NM
+            if any(signal.sigtype in config.sigtypes_xsy_for_weintek
+                   for signal in self.signals_list):
+
+                txt.write('// DO_NM\n')
+                txt.write(f'(* {self.name_for_comment} *)\n')
+
+                for signal in self.signals_list:
+                    for location in self.locations_list:
+                        if (
+                                signal.styp == location.name
+                                and
+                                signal.sigtype
+                                in config.sigtypes_xsy_for_weintek
+                        ):
+                            txt.write(
+                                f'_IO_QX{self.plc.coil}_1_'
+                                f'{int(self.xsy_addr) + i}:='
+                                f'{signal.name}.OXON;\n'
+                            )
+                            i += 1
+                txt.write('\n')
+
+            # DI_NM
+            if any(signal.sigtype in config.sigtypes_di_nm_for_weintek
+                   for signal in self.signals_list):
+
+                txt.write('// DI_NM\n')
+                txt.write(f'(* {self.name_for_comment} *)\n')
+                for signal in self.signals_list:
+                    for location in self.locations_list:
+                        if (
+                                signal.styp == location.name
+                                and
+                                signal.sigtype
+                                in config.sigtypes_di_nm_for_weintek
+                        ):
+                            txt.write(
+                                f'_IO_QX{self.plc.coil}_1_'
+                                f'{int(self.xsy_addr) + i}:='
+                                f'{signal.name}.XVLX;\n'
+                            )
+                            i += 1
+                txt.write('\n')
 
         # data.to_excel(
         #     fr'{self.plc.output_path}\weintek_table.xls',
