@@ -2,26 +2,151 @@ import config
 
 
 class Signal:
+    """
+    Хранит информацию о сигнале, задействованном в работе
+    АСУ ТП СТБ на базе контроллеров tecon, которая необходима
+    для автоматического формирования программного кода на языке ST.
 
+    Параметры
+    ---------
+    name: наименование сигнала. Может быть передано как в формате
+        используемом в коде на ST, так и в формате, который используют
+        в проектной документации (преобразование произойдет автоматически)
+
+    plc: экземпляр PLC к которому относится сигнал
+
+    sigtype: строковое наименование типа сигнала
+
+    position: строковое наименование позиции или экземпляр Position
+
+    location: строковое наименование локации или экземпляр Location
+
+    ff_out: список строковых наименований смежных систем
+
+    device: строковое наименование утсройства или экземпляр Device
+
+    address: строковое значение адреса сигнала
+
+    styp: строковое значение styp сигнала
+    """
     def __init__(
             self,
             name,
             plc,
-            sigtype=None,
-            position=None,
+            sigtype,
+            position,
             location=None,
             ff_out=None,
             device=None,
             address=None,
             styp=None,
     ):
+        # ОШИБКИ
 
-        if not isinstance(plc, PLC):
+        # name
+        if type(name) is not str:
+            raise TypeError(
+                'Ожидается строковое значение '
+                'аргумента name'
+            )
+        if len(name) == 0:
             raise ValueError(
-                'Аргуметом plc при создании '
-                'экземпляра Signal'
+                'Длина Signal.name должна быть больше нуля'
+            )
+
+        # plc
+        if type(plc) is not PLC:
+            raise TypeError(
+                'Аргуметом plc '
                 'может выступать только '
-                'экземпляр/наследник класса PLC!'
+                'экземпляр класса PLC'
+            )
+
+        # sigtype
+        if type(sigtype) is not str:
+            raise TypeError(
+                'Ожидается строковое значение для '
+                'агрумента sigtype'
+            )
+
+        # position
+        if not (
+            type(position) is str
+            or
+            type(position) is Position
+            or
+            position is not None
+        ):
+            raise TypeError(
+                'Для агрумента position '
+                'ожидается строковое значение или '
+                'экземпляр Position'
+            )
+
+        # location
+        if not (
+            type(location) is str
+            or
+            type(location) is Location
+            or
+            location is not None
+        ):
+            raise TypeError(
+                'Для аргумента location '
+                'ожидается строковое значение или '
+                'экземпляр Location'
+            )
+
+        # ff_out
+        if not (
+                (
+                        type(ff_out) is list
+                        and
+                        any(type(el) is not str
+                            for el in ff_out)
+                )
+                or
+                ff_out is not None
+        ):
+            raise TypeError(
+                'Для аргумента ff_out '
+                'ожидается список строковых значений'
+            )
+
+        # device
+        if not (
+            type(device) is str
+            or
+            type(device) is Device
+            or
+            device is not None
+        ):
+            raise TypeError(
+                'Для аргумента device '
+                'ожидается строковое значение или '
+                'экземпляр Device'
+            )
+
+        # address
+        if not (
+            type(address) is str
+            or
+            address is not None
+        ):
+            raise TypeError(
+                'Для аргумента address '
+                'ожидается строковое значение'
+            )
+
+        # styp
+        if not (
+            type(styp) is str
+            or
+            styp is not None
+        ):
+            raise TypeError(
+                'Для аргумента styp '
+                'ожидается строковое значение'
             )
 
         self.name = name.replace('-', '_').replace(' ', '')
