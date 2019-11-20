@@ -75,7 +75,7 @@ class Signal:
             or
             type(position) is Position
             or
-            position is not None
+            position is None
         ):
             raise TypeError(
                 'Для агрумента position '
@@ -89,7 +89,7 @@ class Signal:
             or
             type(location) is Location
             or
-            location is not None
+            location is None
         ):
             raise TypeError(
                 'Для аргумента location '
@@ -102,11 +102,11 @@ class Signal:
                 (
                         type(ff_out) is list
                         and
-                        any(type(el) is not str
-                            for el in ff_out)
+                        not any(type(el) is not str
+                                for el in ff_out)
                 )
                 or
-                ff_out is not None
+                ff_out is None
         ):
             raise TypeError(
                 'Для аргумента ff_out '
@@ -119,7 +119,7 @@ class Signal:
             or
             type(device) is Device
             or
-            device is not None
+            device is None
         ):
             raise TypeError(
                 'Для аргумента device '
@@ -131,7 +131,7 @@ class Signal:
         if not (
             type(address) is str
             or
-            address is not None
+            address is None
         ):
             raise TypeError(
                 'Для аргумента address '
@@ -142,7 +142,7 @@ class Signal:
         if not (
             type(styp) is str
             or
-            styp is not None
+            styp is None
         ):
             raise TypeError(
                 'Для аргумента styp '

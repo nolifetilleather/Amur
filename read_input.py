@@ -66,7 +66,7 @@ def read():
             # ошибка при отсутствии заполнения позиции для сигнала
             raise ValueError(
                 f'Строка {string_number} столбца Position не заполнена '
-                f'при заполненной строке {string_number}\n столбца Signal.'
+                f'при заполненной строке {string_number}\n столбца Signal. '
                 'Проверьте входные данные.\n'
             )
         elif (
