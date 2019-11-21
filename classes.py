@@ -9,9 +9,10 @@ class Signal:
 
     Параметры
     ---------
-    name: наименование сигнала. Может быть передано как в формате
-        используемом в коде на ST, так и в формате, который используют
-        в проектной документации (преобразование произойдет автоматически)
+    name: строковое наименование сигнала. Может быть передано
+        как в формате используемом в коде на ST, так и в формате,
+        который используют в проектной документации (преобразование
+        в формат для ST-кода произойдет автоматически)
 
     plc: экземпляр PLC к которому относится сигнал
 
@@ -164,197 +165,334 @@ class Signal:
 
 
 class SignalsList(list):
+    """
+    Наследник встроенного типа list. Предназначен для хранения ссылок
+    на экземпляры Signal.
+    Имеет методы для анализа собственного содержимого.
+    """
 
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$$$$$$$$ ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ $$$$$$$$$$$$$$$$$$$$$
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
     def has_any_signal_with_sigtype_in(self, sigtypes_list):
+        """
+        Принимает список или кортеж.
+        Возращает True если SignalsList содержит ссылку хотя бы на один
+        экземпляр Signal, значение атрибута .sigtype которого содержится
+        в этом списке/кортеже. В остальных случаях вернет False.
+        """
+        if not isinstance(sigtypes_list, (list, tuple)):
+            raise TypeError(
+                'Ожидается список или кортеж в качестве аргумента'
+            )
         flg = False
         for signal in self:
-            if isinstance(signal, Signal):
+            if type(signal) is Signal:
                 if signal.sigtype in sigtypes_list:
                     flg = True
                     break
         return flg
 
     def has_any_ff_or_ffo_signal_with_sigtype_in(self, sigtypes_list):
+        """
+        Принимает список или кортеж.
+        Возращает True если SignalsList содержит ссылку хотя бы на один
+        экземпляр Signal, атрибуты которого удовлетворяют условиям:
+
+            1) Signal.sigtype содержится в передаваемом списке/кортеже
+
+            2) Signal.location.fire_fightings_cntrs не является None
+               или
+               Signal.ff_out не является None
+
+        В остальных случаях возвращает False.
+        """
+        if not isinstance(sigtypes_list, (list, tuple)):
+            raise TypeError(
+                'Ожидается список или кортеж в качестве аргумента'
+            )
         flg = False
         for signal in self:
             if (
-                    isinstance(signal, Signal)
+                    type(signal) is Signal
                     and
-                    isinstance(signal.location, Location)
+                    signal.sigtype in sigtypes_list
+                    and
+                    ((type(signal.location) is Location
+                      and
+                      signal.location.fire_fightings_cntrs is not None)
+                     or
+                     signal.ff_out is not None)
             ):
-                if (
-                        signal.sigtype in sigtypes_list
-                        and
-                        (signal.location.fire_fightings_cntrs is not None
-                         or
-                         signal.ff_out is not None)
-                ):
-                    flg = True
-                    break
+                flg = True
+                break
         return flg
 
     def has_any_no_ff_or_ffo_signal_with_sigtype_in(self, sigtypes_list):
+        """
+        Принимает список или кортеж.
+        Возращает True если SignalsList содержит ссылку хотя бы на один
+        экземпляр Signal, атрибуты которого удовлетворяют условиям:
+
+            1) Signal.sigtype содержится в передаваемом списке/кортеже
+
+            2) Signal.location является None
+               или
+               Signal.location.fire_fightings_cntrs является None
+
+            3) Signal.ff_out не является None
+
+        В остальных случаях возвращает False.
+        """
+        if not isinstance(sigtypes_list, (list, tuple)):
+            raise TypeError(
+                'Ожидается список или кортеж в качестве аргумента'
+            )
         flg = False
         for signal in self:
             if (
-                    isinstance(signal, Signal)
+                    type(signal) is Signal
+                    and
+                    signal.sigtype in sigtypes_list
+                    and
+                    (signal.location is None
+                     or
+                     signal.location.fire_fightings_cntrs is None)
+                    and
+                    signal.ff_out is None
             ):
-                if (
-                        signal.sigtype in sigtypes_list
-                        and
-                        (signal.location is None
-                         or
-                         signal.location.fire_fightings_cntrs is None)
-                        and
-                        signal.ff_out is None
-                ):
-                    flg = True
-                    break
+                flg = True
+                break
         return flg
 
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$$$$$$$$$$$$ ПРОВЕРКИ НАЛИЧИЯ $$$$$$$$$$$$$$$$$$$$$$$
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
     # INPUT
     def contains_signals_for_input(self):
+        """
+        Возвращает True если SignalsList содержит ссылку хотя бы на
+        один экземпляр Signal, который должен участвовать в формировании
+        текста программы Input.
+        В остальных случаях возвращает False.
+        """
         return self.has_any_signal_with_sigtype_in(
             config.sigtypes_for_input
         )
 
     # OUTPUT
     def contains_signals_for_output(self):
+        """
+        Возвращает True если SignalsList содержит ссылку хотя бы на
+        один экземпляр Signal, который должен участвовать в формировании
+        текста программы Output.
+        В остальных случаях возвращает False.
+        """
         return self.has_any_signal_with_sigtype_in(
             config.sigtypes_for_m_output
         )
 
     # ALARMING
     def contains_signals_for_alarming(self):
-        flg = False
-        for signal in self:
-            if isinstance(signal, Signal):
-                if (
-                        signal.sigtype in config.sigtypes_for_alarming
-                        and
-                        signal.ff_out is None
-                ):
-                    flg = True
-                    break
-        return flg
+        """
+        Возвращает True если SignalsList содержит ссылку хотя бы на
+        один экземпляр Signal, который должен участвовать в формировании
+        текста программы Alarming.
+        В остальных случаях возвращает False.
+        """
+        return any(
+                type(signal) is Signal
+                and
+                signal.sigtype in config.sigtypes_for_alarming
+                and
+                signal.ff_out is None
+                for signal in self
+            )
 
     # COUNTING
     def contains_signals_for_counting(self):
-        return self.has_any_signal_with_sigtype_in(
-            config.sigtypes_for_counting
+        """
+        Возвращает True если SignalsList содержит ссылку хотя бы на
+        один экземпляр Signal, который должен участвовать в формировании
+        текста программы Counting.
+        В остальных случаях возвращает False.
+        """
+        return any(
+            type(signal) is Signal
+            and
+            signal.location is not signal.plc.exceptions_location
+            and
+            signal.sigtype in config.sigtypes_for_counting
+            for signal in self
         )
 
     def contains_signals_with_ff_out_for_counting(self):
+        """
+        Возвращает True если SignalsList содержит ссылку хотя бы на
+        один экземпляр Signal, атрибуты которого удовлетворяют условиям:
+
+            1) Signal.ff_out не является None
+
+            2) Signal.location не является Signal.plc.exceptions_location
+
+        В остальных случаях возвращает False
+        """
         return any(
-            isinstance(signal, Signal)
+            type(signal) is Signal
             and
             signal.ff_out is not None
             and
-            signal.sigtype in config.sigtypes_for_counting
+            signal.location is not signal.plc.exceptions_location
             for signal in self
         )
 
     def contains_signals_without_ff_out_for_counting(self):
+        """
+        Возвращает True если SignalsList содержит ссылку хотя бы на
+        один экземпляр Signal, атрибуты которого удовлетворяют условиям:
+
+            1) Signal.ff_out является None
+
+            2) Signal.sigtype входит в перечень типов сигналов,
+            которые указывают на то, что данный экземпляр должен
+            участвовать в формировании текста программы Counting
+
+            3) Signal.location не является Signal.plc.exceptions_location
+
+        В остальных случаях возвращает False
+        """
         return any(
-            isinstance(signal, Signal)
+            type(signal) is Signal
             and
             signal.ff_out is None
             and
             signal.sigtype in config.sigtypes_for_counting
+            and
+            signal.location is not signal.plc.exceptions_location
             for signal in self
         )
 
     def contains_signals_with_fire_fighting_for_counting(self):
-        flg = False
-        for signal in self:
-            if (
-                    (
-                            isinstance(signal, Signal)
-                            and
-                            isinstance(signal.location, Location)
-                    )
+        """
+        Возвращает True если SignalsList содержит ссылку хотя бы на
+        один экземпляр Signal, атрибуты которого удовлетворяют условиям:
+
+            1) Signal.location.fire_fightings_cntrs не является None
+
+        В остальных случаях возвращает False
+        """
+        return any(
+                    type(signal) is Signal
+                    and
+                    type(signal.location) is Location
                     and
                     signal.location.fire_fightings_cntrs is not None
-                    and
-                    signal.sigtype in config.sigtypes_for_counting
-            ):
-                flg = True
-                break
-        return flg
+                    for signal in self
+            )
 
     def contains_signals_without_fire_fighting_for_counting(self):
-        flg = False
-        for signal in self:
-            if (
-                    (
-                            isinstance(signal, Signal)
-                            and
-                            isinstance(signal.location, Location)
-                    )
+        """
+        Возвращает True если SignalsList содержит ссылку хотя бы на
+        один экземпляр Signal, атрибуты которого удовлетворяют условиям:
+
+            1) Signal.location.fire_fightings_cntrs является None
+               или
+               Signal.location является None
+
+            2) Signal.location не является Signal.plc.exceptions_location
+
+            3) Signal.sigtype входит в перечень типов сигналов,
+            которые указывают на то, что данный экземпляр должен
+            участвовать в формировании текста программы Counting
+
+        В остальных случаях возвращает False
+        """
+        return any(
+                    type(signal) is Signal
                     and
-                    signal.location.fire_fightings_cntrs is None
+                    ((type(signal) is Location
+                      and
+                      signal.location.fire_fightings_cntrs is None)
+                     or
+                     signal.location is None)
                     and
                     signal.sigtype in config.sigtypes_for_counting
-            ):
-                flg = True
-                break
-        return flg
+                    and
+                    signal.location is not signal.plc.exceptions_location
+                    for signal in self
+            )
 
     def contains_ff_or_ffo_signals_with_warning(self):
-        flg = False
-        for signal in self:
-            if (
-                    isinstance(signal, Signal)
+        """
+        Возвращает True если SignalsList содержит ссылку хотя бы на
+        один экземпляр Signal, атрибуты которого удовлетворяют условиям:
+
+            1) Signal.location.fire_fightings_cntrs не является None
+               или
+               Signal.ff_out не является None
+
+            2) Signal.location.warning_cntr является True
+
+        В остальных случаях возвращает False
+        """
+        return any(
+                    type(signal) is Signal
                     and
-                    isinstance(signal.location, Location)
-            ):
-                if (
-                        signal.location.warning_cntr
-                        and
-                        (signal.ff_out is not None
-                         or
-                         signal.location.fire_fightings_cntrs is not None)
-                ):
-                    flg = True
-                    break
-        return flg
+                    type(signal.location) is Location
+                    and
+                    signal.location.warning_cntr
+                    and
+                    (signal.ff_out is not None
+                     or
+                     signal.location.fire_fightings_cntrs is not None)
+                    for signal in self
+                )
 
     def contains_no_ff_or_ffo_signals_with_warning(self):
-        flg = False
-        for signal in self:
-            if (
-                    isinstance(signal, Signal)
+        """
+        Возвращает True если SignalsList содержит ссылку хотя бы на
+        один экземпляр Signal, атрибуты которого удовлетворяют условиям:
+
+            1) Signal.location.fire_fightings_cntrs является None
+
+            2) Signal.ff_out является None
+
+            3) Signal.location.warning_cntr является True
+
+        В остальных случаях возвращает False
+        """
+        return any(
+                    type(signal) is Signal
                     and
-                    isinstance(signal.location, Location)
-            ):
-                if (
-                        signal.location.warning_cntr
-                        and
-                        (signal.ff_out is None
-                         and
-                         signal.location.fire_fightings_cntrs is None)
-                ):
-                    flg = True
-                    break
-        return flg
+                    type(signal.location) is Location
+                    and
+                    signal.location.warning_cntr
+                    and
+                    signal.ff_out is None
+                    and
+                    signal.location.fire_fightings_cntrs is None
+                    for signal in self
+                )
 
     # WEINTEK
-    def contains_signals_for_weintek_diag(self):
+    def contains_diagnostic_signals(self):
+        """
+        Возвращает True если SignalsList содержит ссылку хотя бы на
+        один экземпляр Signal, атрибут Signal.sigtype которого
+        позволяет отнести его к сигналам диагностики.
+        В остальных случаях возвращает False.
+        """
         return (
-            any(signal.sigtype in config.sigtypes_diag_for_weintek
+            any(signal.sigtype in config.sigtypes_of_diagnostic_signals
                 for signal in self)
         )
 
     # TO SAU
     def contains_signals_for_to_sau(self):
+        """
+        Возвращает True если SignalsList содержит ссылку хотя бы на
+        один экземпляр Signal, который должен участвовать в формировании
+        текста программы To_SAU.
+        В остальных случаях возвращает False.
+        """
         return (
             any(signal.sigtype in config.sigtypes_for_to_sau
                 for signal in self)
@@ -362,13 +500,30 @@ class SignalsList(list):
 
     # DIAG
     def contains_signals_for_diag(self):
+        """
+        Возвращает True если SignalsList содержит ссылку хотя бы на
+        один экземпляр Signal, который должен участвовать в формировании
+        текста программы Diag.
+        В остальных случаях возвращает False.
+        """
         return self.has_any_signal_with_sigtype_in(
             config.sigtypes_for_diag
         )
 
 
 class Location:
+    """
+    Хранит информацию о локациях сигналов, задействованных в работе
+    АСУ ТП СТБ на базе контроллеров tecon, которая необходима
+    для автоматического формирования программного кода на языке ST.
 
+    Параметры
+    ---------
+
+    name: строковое наименование локации
+
+
+    """
     def __init__(
             self,
             name,
@@ -618,7 +773,7 @@ class Position:
 
     def is_diag(self):
         return any(
-            signal.sigtype not in config.sigtypes_diag_for_weintek
+            signal.sigtype in config.sigtypes_of_diagnostic_signals
             for signal in self.signals_list
         )
 
@@ -2394,13 +2549,13 @@ class PLC:
 
         sorted_signals = [
             signal for signal in self.__signals_list
-            if signal.sigtype not in config.sigtypes_diag_for_weintek
+            if signal.sigtype not in config.sigtypes_of_diagnostic_signals
         ]
         sorted_signals.sort(key=lambda signal: signal.name)
 
         not_sorted_signals = [
             signal for signal in self.__signals_list
-            if signal.sigtype in config.sigtypes_diag_for_weintek
+            if signal.sigtype in config.sigtypes_of_diagnostic_signals
         ]
 
         self.__signals_list = SignalsList(sorted_signals + not_sorted_signals)
@@ -2828,7 +2983,7 @@ class PLC:
             and
             self.locations_reformed
             and
-            self.__signals_list.contains_signals_for_weintek_diag()
+            self.__signals_list.contains_diagnostic_signals()
             and
             self.devices_diag_signals_created
         )
@@ -2865,7 +3020,7 @@ class PLC:
                 and
                 self.devices_diag_signals_created
                 and
-                self.__signals_list.contains_signals_for_weintek_diag()
+                self.__signals_list.contains_diagnostic_signals()
         )
 
     # TO_SAU
