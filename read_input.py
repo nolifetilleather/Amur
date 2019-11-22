@@ -214,9 +214,10 @@ def read():
     текста Counting.txt
     """
     exceptions_location = Location(
-        name='exc'
+        name='exc',
+        warning_cntr=False,
+        fire_cntr=False,
         )
-    plc.append_location(exceptions_location)
     plc.exceptions_location = exceptions_location
 
     """

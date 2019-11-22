@@ -10,9 +10,9 @@ class Signal:
     Параметры
     ---------
     name: строковое наименование сигнала. Может быть передано
-        как в формате используемом в коде на ST, так и в формате,
-        который используют в проектной документации (преобразование
-        в формат для ST-кода произойдет автоматически)
+    как в формате используемом в коде на ST, так и в формате,
+    который используют в проектной документации (преобразование
+    в формат для ST-кода произойдет автоматически)
 
     plc: экземпляр PLC к которому относится сигнал
 
@@ -47,12 +47,12 @@ class Signal:
         # name
         if type(name) is not str:
             raise TypeError(
-                'Ожидается строковое значение '
-                'аргумента name'
+                'Для аргумента name ожидается '
+                'строковое значение'
             )
-        if len(name) == 0:
+        elif len(name) == 0:
             raise ValueError(
-                'Длина Signal.name должна быть больше нуля'
+                'Длина аргумента name должна быть больше нуля'
             )
 
         # plc
@@ -66,8 +66,8 @@ class Signal:
         # sigtype
         if type(sigtype) is not str:
             raise TypeError(
-                'Ожидается строковое значение для '
-                'агрумента sigtype'
+                'Для аргумента sigtype '
+                'ожидается строковое значение'
             )
 
         # position
@@ -352,8 +352,8 @@ class SignalsList(list):
             1) Signal.ff_out является None
 
             2) Signal.sigtype входит в перечень типов сигналов,
-            которые указывают на то, что данный экземпляр должен
-            участвовать в формировании текста программы Counting
+               которые указывают на то, что данный экземпляр должен
+               участвовать в формировании текста программы Counting
 
             3) Signal.location не является Signal.plc.exceptions_location
 
@@ -400,8 +400,8 @@ class SignalsList(list):
             2) Signal.location не является Signal.plc.exceptions_location
 
             3) Signal.sigtype входит в перечень типов сигналов,
-            которые указывают на то, что данный экземпляр должен
-            участвовать в формировании текста программы Counting
+               которые указывают на то, что данный экземпляр должен
+               участвовать в формировании текста программы Counting
 
         В остальных случаях возвращает False
         """
@@ -522,17 +522,103 @@ class Location:
 
     name: строковое наименование локации
 
+    warning_cntr: логическое значение
 
+    fire_cntr: логическое значение
+
+    fire_fightings_cntrs: список строковых наименований
+    направлений пожаротушения
+
+    conterminal_systems_cntrs: список строковых наименований
+    смежных систем
+
+    voting_logic: список из двух целых чисел или строковых
+    представлений целых чисел
     """
     def __init__(
             self,
             name,
-            warning_cntr=None,
-            fire_cntr=None,
+            warning_cntr,
+            fire_cntr,
             fire_fightings_cntrs=None,
             conterminal_systems_cntrs=None,
             voting_logic=None,
     ):
+        # ОШИБКИ
+
+        # name
+        if type(name) is not str:
+            raise TypeError(
+                'Для аргумента name ожидается строковое значение'
+            )
+        elif len(name) == 0:
+            raise ValueError(
+                'Длина аргумента name должна быть больше нуля'
+            )
+
+        # warning_cntr
+        if type(warning_cntr) is not bool:
+            raise TypeError(
+                'Для аргумента warning_cntr '
+                'ожидается логическое значение'
+            )
+
+        # fire_cntr
+        if type(fire_cntr) is not bool:
+            raise TypeError(
+                'Для аргумента fire_cntr '
+                'ожидается логическое значение'
+            )
+
+        # fire_fightings_cntrs
+        if not (
+                (
+                        type(fire_fightings_cntrs) is list
+                        and
+                        not any(type(el) is not str
+                                for el in fire_fightings_cntrs)
+                )
+                or
+                fire_fightings_cntrs is None
+        ):
+            raise TypeError(
+                'Для аргумента fire_fightings_cntrs '
+                'ожидается список строковых значений'
+            )
+
+        # conterminal_systems_cntrs
+        if not (
+                (
+                        type(conterminal_systems_cntrs) is list
+                        and
+                        not any(type(el) is not str
+                                for el in conterminal_systems_cntrs)
+                )
+                or
+                conterminal_systems_cntrs is None
+        ):
+            raise TypeError(
+                'Для аргумента conterminal_systems_cntrs '
+                'ожидается список строковых значений'
+            )
+
+        # voting_logic
+        if not (
+                (
+                    type(voting_logic) is list
+                    and
+                    len(voting_logic) == 2
+                    and
+                    not any(not str(el).isdigit()
+                            for el in voting_logic)
+
+                )
+                or voting_logic is None
+        ):
+            raise TypeError(
+                'Для аргумента voting_logic ожидается список из двух\n'
+                'целых чисел или строковых представлений целых чисел'
+            )
 
         self.signals_list = SignalsList()  # для ссылок на объекты сигналов
         self.position = None  # см метод position_check_and_set
@@ -546,14 +632,30 @@ class Location:
 
     def position_check_and_set(self):
         """
-        Метод проверяет, что все сигналы относящиеся
-        к локации принадлежат к одной позиции,
-        бросает ошибку, если это не так.
-        Устанавливает значение для атрибута position.
+        Если Signal.position каждого из экземпляров Signal,
+        ссылки на которые находятся в self.signals_list, ссылаются
+        на один и тот же экземпляр Position, тогда:
+
+            1) В self.position записывается ссылка на тот же
+            экземпляр Position, что и у каждого Signal
+
+            2) Ссылка на self сохраняется в Position.location_list
+
+        Если условия не выполняются, возникнет ощибка TypeError.
+
+        Если Signal.position хотя бы одного из экземпляров Signal
+        ссылается на объект, который не является экземпляром Position,
+        возникнет ошибка TypeError.
         """
         positions_set = set()
         for signal in self.signals_list:
-            positions_set.add(signal.position)
+            if type(signal.position) is Position:
+                positions_set.add(signal.position)
+            else:
+                raise TypeError(
+                    'Signal.position должен ссылаться '
+                    'на экземпляр Position'
+                )
         if len(positions_set) != 1:
             print(
                 f'Список позиций сигналов '
