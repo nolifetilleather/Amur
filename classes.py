@@ -20,15 +20,15 @@ class Signal:
 
     position: строковое наименование позиции или экземпляр Position
 
-    location: строковое наименование локации или экземпляр Location
+    location: строковое наименование локации, экземпляр Location или None
 
-    ff_out: список строковых наименований смежных систем
+    ff_out: список строковых наименований смежных систем или None
 
-    device: строковое наименование утсройства или экземпляр Device
+    device: строковое наименование утсройстваб, экземпляр Device или None
 
-    address: строковое значение адреса сигнала
+    address: строковое значение адреса сигнала или None
 
-    styp: строковое значение styp сигнала
+    styp: строковое значение styp сигнала или None
     """
     def __init__(
             self,
@@ -42,113 +42,6 @@ class Signal:
             address=None,
             styp=None,
     ):
-        # ОШИБКИ
-
-        # name
-        if type(name) is not str:
-            raise TypeError(
-                'Для аргумента name ожидается '
-                'строковое значение'
-            )
-        elif len(name) == 0:
-            raise ValueError(
-                'Длина аргумента name должна быть больше нуля'
-            )
-
-        # plc
-        if type(plc) is not PLC:
-            raise TypeError(
-                'Аргуметом plc '
-                'может выступать только '
-                'экземпляр класса PLC'
-            )
-
-        # sigtype
-        if type(sigtype) is not str:
-            raise TypeError(
-                'Для аргумента sigtype '
-                'ожидается строковое значение'
-            )
-
-        # position
-        if not (
-            type(position) is str
-            or
-            type(position) is Position
-            or
-            position is None
-        ):
-            raise TypeError(
-                'Для агрумента position '
-                'ожидается строковое значение или '
-                'экземпляр Position'
-            )
-
-        # location
-        if not (
-            type(location) is str
-            or
-            type(location) is Location
-            or
-            location is None
-        ):
-            raise TypeError(
-                'Для аргумента location '
-                'ожидается строковое значение или '
-                'экземпляр Location'
-            )
-
-        # ff_out
-        if not (
-                (
-                        type(ff_out) is list
-                        and
-                        not any(type(el) is not str
-                                for el in ff_out)
-                )
-                or
-                ff_out is None
-        ):
-            raise TypeError(
-                'Для аргумента ff_out '
-                'ожидается список строковых значений'
-            )
-
-        # device
-        if not (
-            type(device) is str
-            or
-            type(device) is Device
-            or
-            device is None
-        ):
-            raise TypeError(
-                'Для аргумента device '
-                'ожидается строковое значение или '
-                'экземпляр Device'
-            )
-
-        # address
-        if not (
-            type(address) is str
-            or
-            address is None
-        ):
-            raise TypeError(
-                'Для аргумента address '
-                'ожидается строковое значение'
-            )
-
-        # styp
-        if not (
-            type(styp) is str
-            or
-            styp is None
-        ):
-            raise TypeError(
-                'Для аргумента styp '
-                'ожидается строковое значение'
-            )
 
         self.name = name.replace('-', '_').replace(' ', '')
         if not self.name[0].isalpha():
@@ -162,6 +55,189 @@ class Signal:
         self.device = device
         self.address = address
         self.styp = styp
+
+    # name
+    @property
+    def name(self):
+        return self.__name
+
+    @name.setter
+    def name(self, new_name):
+        if type(new_name) is not str:
+            raise TypeError(
+                'Недопустимый тип для Signal.name'
+            )
+        elif len(new_name) == 0:
+            raise ValueError(
+                'Длина Signal.name должна быть больше нуля'
+            )
+        self.__name = new_name
+
+    # plc
+    @property
+    def plc(self):
+        return self.__plc
+
+    @plc.setter
+    def plc(self, new_plc):
+        if type(new_plc) is not PLC:
+            raise TypeError(
+                'Недопустимый тип для Signal.plc'
+            )
+        self.__plc = new_plc
+
+    # sigtype
+    @property
+    def sigtype(self):
+        return self.__sigtype
+
+    @sigtype.setter
+    def sigtype(self, new_sigtype):
+        if type(new_sigtype) is not str:
+            raise TypeError(
+                'Недопустимый тип для Signal.sigtype'
+            )
+        elif len(new_sigtype) == 0:
+            raise ValueError(
+                'Длина Signal.sigtype должна быть больше нуля'
+            )
+        self.__sigtype = new_sigtype
+
+    # position
+    @property
+    def position(self):
+        return self.__position
+
+    @position.setter
+    def position(self, new_position):
+        if not (
+            type(new_position) is str
+            or
+            type(new_position) is Position
+        ):
+            raise TypeError(
+                'Недопустимый тип для Signal.position'
+            )
+        elif type(new_position) is str and len(new_position) == 0:
+            raise ValueError(
+                'Длина строкового значения Signal.position '
+                'должна быть больше нуля'
+            )
+        self.__position = new_position
+
+    # location
+    @property
+    def location(self):
+        return self.__location
+
+    @location.setter
+    def location(self, new_location):
+        if not (
+            type(new_location) is str
+            or
+            type(new_location) is Location
+            or
+            new_location is None
+        ):
+            raise TypeError(
+                'Недопустимый тип для Signal.location'
+            )
+        elif type(new_location) is str and len(new_location) == 0:
+            raise ValueError(
+                'Длина строкового значения Signal.location '
+                'должна быть больше нуля'
+            )
+        self.__location = new_location
+
+    # ff_out
+    @property
+    def ff_out(self):
+        return self.__ff_out
+
+    @ff_out.setter
+    def ff_out(self, new_ff_out):
+        if not (
+                (
+                        type(new_ff_out) is list
+                        and
+                        not any(type(el) is not str
+                                for el in new_ff_out)
+                )
+                or
+                new_ff_out is None
+        ):
+            raise TypeError(
+                'Недопустимый тип для Signal.ff_out'
+            )
+        self.__ff_out = new_ff_out
+
+    # device
+    @property
+    def device(self):
+        return self.__device
+
+    @device.setter
+    def device(self, new_device):
+        if not (
+            type(new_device) is str
+            or
+            type(new_device) is Device
+            or
+            new_device is None
+        ):
+            raise TypeError(
+                'Недопустимый тип для Signal.device'
+            )
+        elif type(new_device) is str and len(new_device) == 0:
+            raise ValueError(
+                'Длина строкового значения Signal.device '
+                'должна быть больше нуля'
+            )
+        self.__device = new_device
+
+    # address
+    @property
+    def address(self):
+        return self.__address
+
+    @address.setter
+    def address(self, new_address):
+        if not (
+            type(new_address) is str
+            or
+            new_address is None
+        ):
+            raise TypeError(
+                'Недопустимый тип для Signal.address'
+            )
+        elif type(new_address) is str and len(new_address) == 0:
+            raise ValueError(
+                'Длина строкового значения Signal.address '
+                'должна быть больше нуля'
+            )
+        self.__address = new_address
+
+    # styp
+    @property
+    def styp(self):
+        return self.__styp
+
+    @styp.setter
+    def styp(self, new_styp):
+        if not (
+            type(new_styp) is str
+            or
+            new_styp is None
+        ):
+            raise TypeError(
+                'Недопустимый тип для Signal.styp'
+            )
+        elif type(new_styp) is str and len(new_styp) == 0:
+            raise ValueError(
+                'Длина строкового значения Signal.styp '
+                'должна быть больше нуля'
+            )
+        self.__styp = new_styp
 
 
 class SignalsList(list):
@@ -513,7 +589,7 @@ class SignalsList(list):
 
 class Location:
     """
-    Хранит информацию о локациях сигналов, задействованных в работе
+    Хранит информацию о локации сигналов, задействованных в работе
     АСУ ТП СТБ на базе контроллеров tecon, которая необходима
     для автоматического формирования программного кода на языке ST.
 
@@ -666,8 +742,8 @@ class Location:
             print()
             raise ValueError(
                 f'В локации {self.name} обнаружены '
-                'сигналы с разными позициями,\n'
-                'исправьте входные данные.'
+                'сигналы с разными позициями, '
+                'исправьте входные данные'
             )
         else:
             self.position = list(positions_set)[0]
@@ -675,37 +751,75 @@ class Location:
 
 
 class Position:
+    """
+    Хранит информацию о позиции сигналов, задействованных в работе
+    АСУ ТП СТБ на базе контроллеров tecon, которая необходима
+    для автоматического формирования программного кода на языке ST.
 
+    Параметры
+    ---------
+
+    name: строковое наименование позиции. Может быть передано
+    как в формате используемом в коде на ST, так и в формате,
+    который используют в проектной документации (преобразование
+    в формат для ST-кода произойдет автоматически)
+
+    plc: экземпляр PLC к которому относится позиция
+
+    di_m_addr: целое число или строковое представление целого числа
+    (начальный адрес для DI_M сигналов данной позиции в программе
+    Weintek)
+
+    do_m_addr: целое число или строковое представление целого числа
+    (начальный адрес для DO_M сигналов данной позиции в программе
+    Weintek)
+
+    do_nm_addr: целое число или строковое представление целого числа
+    (начальный адрес для DO_M сигналов данной позиции в программе
+    Weintek)
+
+    ai_addr: целое число или строковое представление целого числа
+    (начальный адрес для AI сигналов данной позиции в программе
+    Weintek)
+
+    tush_addr: целое число или строковое представление целого числа
+    (начальный адрес для тушения по данной позиции в программе
+    Weintek)
+
+    mov_addr: целое число или строковое представление целого числа
+    (начальный адрес для задвижек по данной позиции в программе
+    Weintek)
+    """
     def __init__(
             self,
-            plc,
             name,
-            izv_addr=None,
-            opv_addr=None,
-            tush_addr=None,
-            xsy_addr=None,
-            mov_addr=None,
-            ai_addr=None,
+            plc,
+            di_m_addr=None,  # Weintek
+            do_m_addr=None,  # Weintek
+            do_nm_addr=None,  # Weintek
+            ai_addr=None,  # Weintek
+            tush_addr=None,  # Weintek
+            mov_addr=None,  # Weintek
     ):
 
         if not isinstance(plc, PLC):
-            raise ValueError(
+            raise TypeError(
                 'Аргуметом plc при создании '
-                'экземпляра Position'
+                'экземпляра Position '
                 'может выступать только '
                 'экземпляр/наследник класса PLC!'
             )
 
-        self.plc = plc
-        self.name_for_comment = name
         self.name = self.format_position_name(name)
+        self.name_for_comment = name
+        self.plc = plc
 
-        self.izv_addr = izv_addr
-        self.opv_addr = opv_addr
-        self.tush_addr = tush_addr
-        self.xsy_addr = xsy_addr
-        self.mov_addr = mov_addr
+        self.izv_addr = di_m_addr
+        self.opv_addr = do_m_addr
+        self.xsy_addr = do_nm_addr
         self.ai_addr = ai_addr
+        self.tush_addr = tush_addr
+        self.mov_addr = mov_addr
 
         self.signals_list = SignalsList()
         self.locations_list = []
@@ -716,12 +830,17 @@ class Position:
         self.counters_for_sum = []
         self.bool_counters = set()
 
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # $$$$$$$$$$$$$$$$$$$$$ ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ $$$$$$$$$$$$$$$$$$$$$
-    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
     @staticmethod
     def format_position_name(name):
+        """
+        Принимает строковое наименование позиции в формате,
+        используемом в проектной документации.
+
+        Возвращает строковое наименование позиции в формате,
+        изспользуемом в ST-коде.
+        """
         frmt_name = name.replace(' ', '').replace('-', '_')
         if not frmt_name[0].isalpha():
             frmt_name = 'P' + frmt_name
@@ -733,6 +852,29 @@ class Position:
             counter,
             cntr_marker,
     ):
+        """
+        Параметры
+        ---------
+        signal: экземпляр Signal
+
+        counter: строковое значение (наименование переменной счетчика
+        для использования в ST-кода)
+
+        cntr_marker: строковое значение (атрибут функционального блока
+        сигнала из библиотеки проекта в SCADA ТЕКОН)
+
+        Возвращает строку ST-кода, описывающую "срабатывание" счетчика
+        по сигналу
+        """
+
+        # ОШИБКИ
+
+        # signal
+        if type(signal) is not Signal:
+            raise TypeError(
+                'Для аргумента signal ожидается экземпляр Signal'
+            )
+
         return (
             f'{counter}:=Count({signal.name}.{cntr_marker}, {counter});\n'
         )
@@ -744,6 +886,21 @@ class Position:
             counter,
             cntr_marker,
     ):
+        """
+        Метод записывает в текстовый файл строки кода на языке ST,
+        описывающие "срабатывание" счетчика по одному или двум сигналам
+        из списка сигналов, принадлежащим к локации
+
+        Параметры
+        ---------
+        txt: ссылка текстовый файл
+
+        location: экземпляр Location
+
+        counter:
+
+        cntr_marker:
+        """
 
         # ПО ОДНОМУ СИГНАЛУ
         if (

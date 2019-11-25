@@ -84,8 +84,8 @@ def read():
     for position_name in positions:
 
         position = Position(
-                plc=plc,
                 name=position_name,
+                plc=plc,
         )
 
         for i in range(len(input_frame)):
@@ -157,7 +157,9 @@ def read():
 
                 sigtype=input_frame['Sigtype'][i],
 
-                styp=input_frame['Styp'][i],
+                styp=input_frame['Styp'][i]
+                if input_frame['Styp'][i] != ''
+                else None,
 
                 # на данном этапе в position и location записываются
                 # строковые значения из input_frame, они необходимы
