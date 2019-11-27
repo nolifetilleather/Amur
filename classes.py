@@ -614,10 +614,6 @@ class Location:
 
     voting_logic: список из двух целых чисел или строковых
     представлений целых чисел или None
-
-    Свойства
-    --------
-
     """
     def __init__(
             self,
@@ -641,14 +637,31 @@ class Location:
 
     @property
     def signals_list(self):
+        """
+        Копия Signal.__signals_list
+        """
         return self.__signals_list.copy()
 
     def append_signal(self, signal):
+        """
+        Метод добавляет передаваемый экземпляр Signal
+        в Location.__signals_list
+
+        Если тип передаваемого объекта не является Signal
+        возникнет ошибка
+        """
         if type(signal) is Signal:
             self.__signals_list.append(signal)
+        else:
+            raise TypeError(
+                'Недопустимый тип, ожидается экземпляр Signal'
+            )
 
     @property
     def position(self):
+        """
+        Возвращает None
+        """
         return self.__position
 
     @property
@@ -797,6 +810,10 @@ class Location:
         ссылается на объект, который не является экземпляром Position,
         возникнет ошибка TypeError.
         """
+        if len(self.__signals_list) == 0:
+            raise ValueError(
+                'Location.__signals_list пуст'
+            )
         positions_set = set()
         for signal in self.signals_list:
             if type(signal.position) is Position:
