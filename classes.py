@@ -29,6 +29,10 @@ class Signal:
     address: строковое значение адреса сигнала или None
 
     styp: строковое значение styp сигнала или None
+
+    Свойства
+    --------
+
     """
     def __init__(
             self,
@@ -43,10 +47,7 @@ class Signal:
             styp=None,
     ):
 
-        self.name = name.replace('-', '_').replace(' ', '')
-        if not self.name[0].isalpha():
-            self.name = 'P' + self.name
-
+        self.name = name
         self.plc = plc
         self.sigtype = sigtype
         self.position = position
@@ -71,7 +72,10 @@ class Signal:
             raise ValueError(
                 'Длина Signal.name должна быть больше нуля'
             )
-        self.__name = new_name
+
+        self.__name = new_name.replace('-', '_').replace(' ', '')
+        if not self.__name[0].isalpha():
+            self.__name = 'P' + self.__name
 
     # plc
     @property
@@ -603,101 +607,30 @@ class Location:
     fire_cntr: логическое значение
 
     fire_fightings_cntrs: список строковых наименований
-    направлений пожаротушения
+    направлений пожаротушения или None
 
     conterminal_systems_cntrs: список строковых наименований
-    смежных систем
+    смежных систем или None
 
     voting_logic: список из двух целых чисел или строковых
-    представлений целых чисел
+    представлений целых чисел или None
+
+    Свойства
+    --------
+
     """
     def __init__(
             self,
             name,
-            warning_cntr,
-            fire_cntr,
+            warning_cntr=False,
+            fire_cntr=False,
             fire_fightings_cntrs=None,
             conterminal_systems_cntrs=None,
             voting_logic=None,
     ):
-        # ОШИБКИ
 
-        # name
-        if type(name) is not str:
-            raise TypeError(
-                'Для аргумента name ожидается строковое значение'
-            )
-        elif len(name) == 0:
-            raise ValueError(
-                'Длина аргумента name должна быть больше нуля'
-            )
-
-        # warning_cntr
-        if type(warning_cntr) is not bool:
-            raise TypeError(
-                'Для аргумента warning_cntr '
-                'ожидается логическое значение'
-            )
-
-        # fire_cntr
-        if type(fire_cntr) is not bool:
-            raise TypeError(
-                'Для аргумента fire_cntr '
-                'ожидается логическое значение'
-            )
-
-        # fire_fightings_cntrs
-        if not (
-                (
-                        type(fire_fightings_cntrs) is list
-                        and
-                        not any(type(el) is not str
-                                for el in fire_fightings_cntrs)
-                )
-                or
-                fire_fightings_cntrs is None
-        ):
-            raise TypeError(
-                'Для аргумента fire_fightings_cntrs '
-                'ожидается список строковых значений'
-            )
-
-        # conterminal_systems_cntrs
-        if not (
-                (
-                        type(conterminal_systems_cntrs) is list
-                        and
-                        not any(type(el) is not str
-                                for el in conterminal_systems_cntrs)
-                )
-                or
-                conterminal_systems_cntrs is None
-        ):
-            raise TypeError(
-                'Для аргумента conterminal_systems_cntrs '
-                'ожидается список строковых значений'
-            )
-
-        # voting_logic
-        if not (
-                (
-                    type(voting_logic) is list
-                    and
-                    len(voting_logic) == 2
-                    and
-                    not any(not str(el).isdigit()
-                            for el in voting_logic)
-
-                )
-                or voting_logic is None
-        ):
-            raise TypeError(
-                'Для аргумента voting_logic ожидается список из двух\n'
-                'целых чисел или строковых представлений целых чисел'
-            )
-
-        self.signals_list = SignalsList()  # для ссылок на объекты сигналов
-        self.position = None  # см метод position_check_and_set
+        self.__signals_list = SignalsList()  # для ссылок на объекты сигналов
+        self.__position = None  # см метод position_check_and_set
 
         self.name = name
         self.warning_cntr = warning_cntr
@@ -705,6 +638,147 @@ class Location:
         self.fire_fightings_cntrs = fire_fightings_cntrs
         self.conterminal_systems_cntrs = conterminal_systems_cntrs
         self.voting_logic = voting_logic
+
+    @property
+    def signals_list(self):
+        return self.__signals_list.copy()
+
+    def append_signal(self, signal):
+        if type(signal) is Signal:
+            self.__signals_list.append(signal)
+
+    @property
+    def position(self):
+        return self.__position
+
+    @property
+    def name(self):
+        return self.__name
+
+    @name.setter
+    def name(self, new_name):
+        if type(new_name) is not str:
+            raise TypeError(
+                'Недопустимый тип для Location.name'
+            )
+        elif len(new_name) == 0:
+            raise ValueError(
+                'Длина Location.name должна быть больше нуля'
+            )
+        self.__name = new_name
+
+    @property
+    def warning_cntr(self):
+        return self.__warning_cntr
+
+    @warning_cntr.setter
+    def warning_cntr(self, new_warning_cntr):
+        if type(new_warning_cntr) is not bool:
+            raise TypeError(
+                'Недопустимый тип для Location.warning_cntr'
+            )
+        self.__warning_cntr = new_warning_cntr
+
+    @property
+    def fire_cntr(self):
+        return self.__fire_cntr
+
+    @fire_cntr.setter
+    def fire_cntr(self, new_fire_cntr):
+        if type(new_fire_cntr) is not bool:
+            raise TypeError(
+                'Недопустимый тип для Location.fire_cntr'
+            )
+        self.__fire_cntr = new_fire_cntr
+
+    @property
+    def fire_fightings_cntrs(self):
+        return self.__fire_fightings_cntrs
+
+    @fire_fightings_cntrs.setter
+    def fire_fightings_cntrs(self, new_fire_fightings_cntrs):
+        if not (
+                (
+                        type(new_fire_fightings_cntrs) is list
+                        and
+                        # len(new_fire_fightings_cntrs) > 0
+                        # and
+                        not any(type(el) is not str
+                                for el in new_fire_fightings_cntrs)
+                )
+                or
+                new_fire_fightings_cntrs is None
+        ):
+            raise TypeError(
+                'Недопустимый тип для Location.fire_fightings_cntrs'
+            )
+        self.__fire_fightings_cntrs = new_fire_fightings_cntrs
+
+    @property
+    def conterminal_systems_cntrs(self):
+        return self.__conterminal_systems_cntrs
+
+    @conterminal_systems_cntrs.setter
+    def conterminal_systems_cntrs(self, new_conterminal_systems_cntrs):
+        if not (
+                (
+                        type(new_conterminal_systems_cntrs) is list
+                        and
+                        # len(new_conterminal_systems_cntrs) > 0
+                        # and
+                        not any(type(el) is not str
+                                for el in new_conterminal_systems_cntrs)
+                )
+                or
+                new_conterminal_systems_cntrs is None
+        ):
+            raise TypeError(
+                'Недопустимый тип для Location.conterminal_systems_cntrs'
+            )
+        self.__conterminal_systems_cntrs = new_conterminal_systems_cntrs
+
+    @property
+    def voting_logic(self):
+        if type(self.__voting_logic) is list:
+            return self.__voting_logic.copy()
+        else:
+            return None
+
+    @voting_logic.setter
+    def voting_logic(self, new_voting_logic):
+
+        if type(new_voting_logic) is not list and new_voting_logic is not None:
+            raise TypeError(
+                'Недопустимый тип для Location.voting_logic'
+            )
+
+        elif (
+                type(new_voting_logic) is list
+                and
+                len(new_voting_logic) != 0
+                and
+                any(not str(el).isdigit()
+                    for el in new_voting_logic)
+        ):
+            raise TypeError(
+                'Недопустимый для Location.voting_logic '
+                'тип в списке'
+            )
+
+        elif (
+                type(new_voting_logic) is list
+                and
+                len(new_voting_logic) != 2
+                and
+                not any(not str(el).isdigit()
+                        for el in new_voting_logic)
+        ):
+            raise ValueError(
+                'Недопустимое значение для Location.voting_logic\n'
+                'Список должен содержать два эелемента'
+            )
+
+        self.__voting_logic = new_voting_logic
 
     def position_check_and_set(self):
         """
@@ -729,24 +803,23 @@ class Location:
                 positions_set.add(signal.position)
             else:
                 raise TypeError(
-                    'Signal.position должен ссылаться '
-                    'на экземпляр Position'
+                    'Недопустимый тип для Signal.position'
                 )
         if len(positions_set) != 1:
-            print(
-                f'Список позиций сигналов '
-                f'"локации" {self.name}:\n'
+            report = (
+                f'Список позиций сигналов локации {self.name}:\n'
             )
+
             for position in positions_set:
-                print(position.name)
-            print()
+                report += f'{position.name}\n'
+
             raise ValueError(
                 f'В локации {self.name} обнаружены '
-                'сигналы с разными позициями, '
-                'исправьте входные данные'
+                f'сигналы с разными позициями\n'
+                f'{report}'
             )
         else:
-            self.position = list(positions_set)[0]
+            self.__position = list(positions_set)[0]
             self.position.locations_list.append(self)
 
 
@@ -2844,22 +2917,15 @@ class PLC:
         for location in self.__locations_list:
             for signal in self.__signals_list:
                 if location.name == signal.location:
-                    location.signals_list.append(signal)
+                    location.append_signal(signal)
                     """
-                    Заменим строковое значение атрибута
-                    location объекта сигнала полученное
-                    при чтении входныъ данных ссылкой на
-                    соответствующий объект "локации".
+                    Замена строковых значений
+                    signal.location полученных
+                    при чтении входных данных
+                    ссылкой на соответствующие
+                    экземпляры Location
                     """
                     signal.location = location
-            """
-            Проверка допустимости значений в signals_list
-            экземпляра Location.
-            Установка установка необходимых ссылок
-            в атрибутах экзмпляра Location и соответствующего
-            экземпляра Position на основе заполненного
-            signals_list.
-            """
             if location != self.exceptions_location:
                 location.position_check_and_set()
 
@@ -3569,7 +3635,7 @@ class PLC:
                 )
                 for device in self.__devices_list:
                     device.mops3a_m_ivxx_xvlx_write_to_txt(txt)
-                    device.mops3a_s_idvx_dvxx_write_to_txt(txt)
+                    device.mops3a_s_ivxx_xvlx_write_to_txt(txt)
 
                 txt.write(
                     '//Формируем сигнал Недостоверность шлейфа '

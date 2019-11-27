@@ -250,6 +250,19 @@ def read():
         f'Location и Location_CE равны: {sets_equal}'
     )
 
+    if not sets_equal:
+        line = '!' * 100
+        print(line)
+        print('Значения из столбца Location, которых нет в Location_CE:')
+        for el in loc_set:
+            if el not in loc_ce_set:
+                print(el)
+        print('\nЗначения из столбца Location_CE, которых нет в Location:')
+        for el in loc_ce_set:
+            if el not in loc_set:
+                print(el)
+        print(line)
+
     if sets_equal and sets_not_empty:
 
         seen = []
@@ -404,14 +417,17 @@ def read():
     Проверка корректности заполнения по равенству множеств
     от значений в столбцах Device и Devices.
     """
-    sets_equal = (
-            set(list(input_frame['Device'])).discard('')
-            == set(list(input_frame['Devices'])).discard('')
-    )
+    dev_set = set(list(input_frame['Device']))
+    dev_set.discard('')
+
+    devs_set = set(list(input_frame['Devices']))
+    devs_set.discard('')
+
+    sets_equal = dev_set == devs_set
     sets_not_empty = (
-            set(list(input_frame['Device'])).discard('') != set()
+            len(dev_set) != 0
             and
-            set(list(input_frame['Devices'])).discard('') != set()
+            len(devs_set) != 0
     )
 
     print(
@@ -422,8 +438,20 @@ def read():
         f'Device и Devices равны: {sets_equal}'
     )
 
-    if sets_equal and sets_not_empty:
+    if not sets_equal:
+        line = '!' * 100
+        print(line)
+        print('Значения из столбца Device, которых нет в Devices:')
+        for el in dev_set:
+            if el not in devs_set:
+                print(el)
+        print('\nЗначения из столбца Devices, которых нет в Device:')
+        for el in devs_set:
+            if el not in dev_set:
+                print(el)
+        print(line)
 
+    if sets_not_empty:
         seen = []
         for device in input_frame['Devices']:
             if device != '' and device in seen:
