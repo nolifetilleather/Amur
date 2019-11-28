@@ -555,9 +555,9 @@ class SignalsList(list):
     # WEINTEK
     def contains_diagnostic_signals(self):
         """
-        Возвращает True если SignalsList содержит ссылку хотя бы на
-        один экземпляр Signal, атрибут Signal.sigtype которого
-        позволяет отнести его к сигналам диагностики.
+        Возвращает True если SignalsList содержит ссылку
+        хотя бы на один экземпляр Signal, значение Signal.sigtype
+        которого позволяет отнести его к сигналам диагностики.
         В остальных случаях возвращает False.
         """
         return (
@@ -660,7 +660,9 @@ class Location:
     @property
     def position(self):
         """
-        Возвращает None
+        Если метод Location.position_check_and_set() был
+        выполнен - вернет экземпляр Position.
+        В обратном случае вернет None.
         """
         return self.__position
 
@@ -1200,9 +1202,10 @@ class Position:
             txt.write(f'// {sigtype}\n')
             for signal in self.signals_list:
                 if signal.sigtype == sigtype:
+                    inv = 'TRUE' if signal.styp == 'inv' else '.INVR'
                     txt.write(
                         f'{signal.name}'
-                        f'(_IO_{signal.address}, .MBIN, .INVR, '
+                        f'(_IO_{signal.address}, .MBIN, {inv}, '
                         f'SYS_LNG.XLNG);\n'
                     )
             txt.write('\n')
@@ -1277,9 +1280,10 @@ class Position:
             txt.write(f'// {sigtype}\n')
             for signal in self.signals_list:
                 if signal.sigtype == sigtype:
+                    inv = 'TRUE' if signal.styp == 'inv' else '.INVR'
                     txt.write(
                         f'{signal.name}(_IO_{signal.address}, .CAON, .MBIN, '
-                        'SYS_LNG.XLNG);\n'
+                        f'{inv}, SYS_LNG.XLNG);\n'
                         f'_IO_{signal.address}.ValueBOOL'
                         f':=NOT {signal.name}.OXON;\n\n'
                         )
